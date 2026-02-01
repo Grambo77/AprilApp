@@ -902,6 +902,11 @@
     <canvas id="cameraCanvas"></canvas>
   </div>
   <div class="camera-flash" id="cameraFlash"></div>
+
+  <!-- Hidden file input — triggers OS photo picker when clicked via JS -->
+  <input type="file" id="photoInput" accept="image/*" style="display:none;">
+
+  <!-- Live camera controls -->
   <div class="camera-controls" id="cameraControls">
     <div class="camera-filter-name" id="cameraFilterName">✦ Pink Pony Club ✦</div>
     <div class="camera-frame-name" id="cameraFrameName"></div>
@@ -912,6 +917,19 @@
       <button class="btn" id="btnCamFlip"><span class="btn-icon">⟳</span> Flip</button>
     </div>
     <button class="btn" id="btnCamClose"><span class="btn-icon">✕</span> Back to Fractals</button>
+  </div>
+
+  <!-- Photo editor controls (separate from live camera) -->
+  <div class="camera-controls" id="editorControls">
+    <div class="camera-filter-name" id="editorFilterName">✦ Pink Pony Club ✦</div>
+    <div class="camera-frame-name" id="editorFrameName"></div>
+    <div class="camera-btn-row">
+      <button class="btn" id="btnEdFilter"><span class="btn-icon">♦</span> Filter</button>
+      <button class="btn" id="btnEdFrame"><span class="btn-icon">❑</span> Frame</button>
+      <button class="shutter-btn" id="btnEdSave" title="Save photo"></button>
+      <button class="btn" id="btnEdPick"><span class="btn-icon">🖼</span> New</button>
+    </div>
+    <button class="btn" id="btnEdClose"><span class="btn-icon">✕</span> Back to Fractals</button>
   </div>
 
   <!-- Top UI -->
@@ -934,6 +952,7 @@
       <button class="btn" id="btnQuotes"><span class="btn-icon">✧</span> Quotes</button>
       <button class="btn" id="btnEditQuotes"><span class="btn-icon">✎</span> Edit</button>
       <button class="btn" id="btnCamera"><span class="btn-icon">📷</span> Camera</button>
+      <button class="btn" id="btnEditPhoto"><span class="btn-icon">🖼</span> Edit</button>
       <button class="btn" id="btnFullscreen"><span class="btn-icon">⛶</span> Full</button>
     </div>
     <div class="slider-row">
@@ -971,7 +990,12 @@
       cameraAnimFrame: null,
       cameraFilterIndex: 0,
       cameraFrameIndex: 0,   // 0 = no frame, 1+ = frame styles
-      facingMode: 'user',  // 'user' = front, 'environment' = back
+      facingMode: 'user',
+      // Photo editor mode
+      editorActive: false,
+      editorImage: null,       // Stores the loaded Image object
+      editorFilterIndex: 0,
+      editorFrameIndex: 0,  // 'user' = front, 'environment' = back
     };
 
     const FRACTAL_TYPES = ['Julia Set', 'Mandelbrot', 'Burning Ship', 'Kaleidoscope'];
@@ -2245,6 +2269,193 @@
     }
 
     // ============================================
+    // PHOTO EDITOR
+    // Loads an image from the device's gallery and
+    // applies the same filters + frames as camera mode.
+    // Unlike the live camera, this renders on-demand
+    // (when filter/frame changes) instead of per-frame,
+    // so we can work at full image resolution for
+    // high-quality exports.
+    // ============================================
+
+    function openPhotoEditor() {
+      // Trigger the hidden file input to open the OS photo picker
+      document.getElementById('photoInput').click();
+    }
+
+    function handlePhotoSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const img = new Image();
+      img.onload = () => {
+        state.editorImage = img;
+
+        // Stop any active modes
+        if (state.micActive) disableMic();
+        if (state.quoteMode) toggleQuoteMode();
+        if (state.cameraActive) closeCamera();
+
+        // Size canvas to the image dimensions, capped for
+        // performance. Images over 2000px on either side get
+        // scaled down — still much higher res than the live
+        // camera canvas.
+        const MAX_DIM = 2000;
+        let iw = img.width;
+        let ih = img.height;
+        if (iw > MAX_DIM || ih > MAX_DIM) {
+          const scale = MAX_DIM / Math.max(iw, ih);
+          iw = Math.floor(iw * scale);
+          ih = Math.floor(ih * scale);
+        }
+        cameraCanvas.width = iw;
+        cameraCanvas.height = ih;
+
+        // Show editor UI
+        state.editorActive = true;
+        document.getElementById('cameraLayer').classList.add('active');
+        document.getElementById('editorControls').classList.add('active');
+        document.getElementById('topBar').classList.add('ui-hidden');
+        document.getElementById('bottomBar').classList.add('ui-hidden');
+
+        // Render the photo with current filter + frame
+        renderEditedPhoto();
+      };
+
+      // Read the selected file as a data URL and load into Image
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.readAsDataURL(file);
+
+      // Reset the input so selecting the same file again triggers change
+      event.target.value = '';
+    }
+
+    function renderEditedPhoto() {
+      if (!state.editorActive || !state.editorImage) return;
+
+      const img = state.editorImage;
+      const w = cameraCanvas.width;
+      const h = cameraCanvas.height;
+
+      // Draw the original image scaled to canvas
+      // Uses cover-fit same as camera mode
+      const imgAspect = img.width / img.height;
+      const canAspect = w / h;
+
+      let sx, sy, sw, sh;
+      if (imgAspect > canAspect) {
+        sh = img.height;
+        sw = img.height * canAspect;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.width;
+        sh = img.width / canAspect;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+      }
+
+      cameraCtx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+
+      // Apply pixel filter (same code as camera mode)
+      const filter = CAMERA_FILTERS[state.editorFilterIndex];
+      const imageData = cameraCtx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const cx = w / 2, cy = h / 2;
+      const maxDist = Math.hypot(cx, cy);
+
+      for (let i = 0; i < data.length; i += 4) {
+        let r = data[i];
+        let g = data[i + 1];
+        let b = data[i + 2];
+
+        r += filter.warmth;
+        b -= filter.warmth * 0.5;
+        r *= filter.tint[0];
+        g *= filter.tint[1];
+        b *= filter.tint[2];
+
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = lum + (r - lum) * filter.saturation;
+        g = lum + (g - lum) * filter.saturation;
+        b = lum + (b - lum) * filter.saturation;
+
+        r = ((r / 255 - 0.5) * filter.contrast + 0.5) * 255;
+        g = ((g / 255 - 0.5) * filter.contrast + 0.5) * 255;
+        b = ((b / 255 - 0.5) * filter.contrast + 0.5) * 255;
+
+        if (filter.vignette > 0) {
+          const px = (i / 4) % w;
+          const py = Math.floor((i / 4) / w);
+          const dist = Math.hypot(px - cx, py - cy) / maxDist;
+          const vig = 1 - filter.vignette * dist * dist;
+          r *= vig;
+          g *= vig;
+          b *= vig;
+        }
+
+        data[i] = Math.max(0, Math.min(255, r));
+        data[i + 1] = Math.max(0, Math.min(255, g));
+        data[i + 2] = Math.max(0, Math.min(255, b));
+      }
+
+      cameraCtx.putImageData(imageData, 0, 0);
+
+      // Draw frame on top — reuse the same frame system
+      // Temporarily swap in editor's frame index
+      const savedFrameIdx = state.cameraFrameIndex;
+      state.cameraFrameIndex = state.editorFrameIndex;
+      drawCameraFrame(cameraCtx, w, h);
+      state.cameraFrameIndex = savedFrameIdx;
+    }
+
+    function closePhotoEditor() {
+      state.editorActive = false;
+      state.editorImage = null;
+      document.getElementById('cameraLayer').classList.remove('active');
+      document.getElementById('editorControls').classList.remove('active');
+      if (state.uiVisible) {
+        document.getElementById('topBar').classList.remove('ui-hidden');
+        document.getElementById('bottomBar').classList.remove('ui-hidden');
+      }
+    }
+
+    function cycleEditorFilter() {
+      state.editorFilterIndex = (state.editorFilterIndex + 1) % CAMERA_FILTERS.length;
+      document.getElementById('editorFilterName').textContent =
+        '✦ ' + CAMERA_FILTERS[state.editorFilterIndex].name + ' ✦';
+      renderEditedPhoto();
+    }
+
+    function cycleEditorFrame() {
+      state.editorFrameIndex = (state.editorFrameIndex + 1) % CAMERA_FRAMES.length;
+      const name = CAMERA_FRAMES[state.editorFrameIndex].name;
+      document.getElementById('editorFrameName').textContent =
+        state.editorFrameIndex === 0 ? '' : '⬥ ' + name;
+      renderEditedPhoto();
+    }
+
+    function saveEditedPhoto() {
+      // Flash feedback
+      const flash = document.getElementById('cameraFlash');
+      flash.classList.add('flash');
+      setTimeout(() => flash.classList.remove('flash'), 150);
+
+      cameraCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const filterName = CAMERA_FILTERS[state.editorFilterIndex].name.replace(/[^a-z]/gi, '');
+        a.download = 'PinkPony_Edit_' + filterName + '_' + Date.now() + '.jpg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 'image/jpeg', 0.92);
+    }
+
+    // ============================================
     // EVENT LISTENERS
     // ============================================
 
@@ -2278,6 +2489,15 @@
     document.getElementById('btnCamFrame').addEventListener('click', cycleCameraFrame);
     document.getElementById('btnCamFlip').addEventListener('click', flipCamera);
     document.getElementById('btnShutter').addEventListener('click', capturePhoto);
+
+    // Photo editor mode
+    document.getElementById('btnEditPhoto').addEventListener('click', openPhotoEditor);
+    document.getElementById('photoInput').addEventListener('change', handlePhotoSelected);
+    document.getElementById('btnEdFilter').addEventListener('click', cycleEditorFilter);
+    document.getElementById('btnEdFrame').addEventListener('click', cycleEditorFrame);
+    document.getElementById('btnEdSave').addEventListener('click', saveEditedPhoto);
+    document.getElementById('btnEdPick').addEventListener('click', openPhotoEditor);
+    document.getElementById('btnEdClose').addEventListener('click', closePhotoEditor);
 
     // Quote mode toggle
     document.getElementById('btnQuotes').addEventListener('click', toggleQuoteMode);
