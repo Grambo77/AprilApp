@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pink Pony Fractals</title>
+
+  <!-- ============================================
+       PWA META TAGS
+       These tell browsers/OS how to handle the app
+       when installed to home screen.
+  ============================================ -->
+  <!-- Manifest: defines app name, icons, colors, display mode -->
+  <link rel="manifest" href="manifest.json">
+  <!-- Theme color: colors the Android status bar / browser toolbar -->
+  <meta name="theme-color" content="#ff2d6b">
+  <!-- Apple-specific: makes iOS treat it as a standalone app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PonyFractals">
+  <!-- Apple touch icon: what shows on iOS home screen -->
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Preload fonts so they're ready before first paint -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       CHAPPELL ROAN AESTHETIC — PHASE 2
+       Maximalist camp: neon pinks, glitter golds,
+       deep blacks, drag-queen-at-the-county-fair
+       energy. Think: neon motel sign meets
+       vintage Hollywood glamour.
+    ============================================ */
+
+    /* -- Theme palettes as CSS custom properties --
+       Each palette changes the entire UI + fractal
+       colors in one swap. The JS toggles a class
+       on <body> to switch between them. */
+    :root {
+      /* Pink Pony Club — signature hot pink neon */
+      --bg-dark: #0a0007;
+      --primary: #ff2d6b;
+      --primary-glow: rgba(255, 45, 107, 0.4);
+      --accent: #ff69b4;
+      --accent-soft: #ffb6d9;
+      --highlight: #ffd700;
+      --surface: rgba(255, 45, 107, 0.12);
+      --surface-border: rgba(255, 45, 107, 0.4);
+      --text-primary: #fff0f5;
+      --text-muted: rgba(255, 182, 217, 0.5);
+      --gradient-deep: #2d0a31;
+    }
+
+    body.theme-redwine {
+      /* Red Wine Supernova — deep reds, amber, gold */
+      --primary: #dc143c;
+      --primary-glow: rgba(220, 20, 60, 0.4);
+      --accent: #ff6347;
+      --accent-soft: #ffb088;
+      --highlight: #ffc107;
+      --surface: rgba(220, 20, 60, 0.12);
+      --surface-border: rgba(220, 20, 60, 0.4);
+      --text-primary: #fff5ee;
+      --text-muted: rgba(255, 176, 136, 0.5);
+      --gradient-deep: #1a0005;
+    }
+
+    body.theme-midwest {
+      /* Midwest Princess — dreamy pastels, lavender */
+      --primary: #c77dff;
+      --primary-glow: rgba(199, 125, 255, 0.4);
+      --accent: #e0aaff;
+      --accent-soft: #f0d6ff;
+      --highlight: #80ffdb;
+      --surface: rgba(199, 125, 255, 0.12);
+      --surface-border: rgba(199, 125, 255, 0.4);
+      --text-primary: #f8f0ff;
+      --text-muted: rgba(224, 170, 255, 0.5);
+      --gradient-deep: #10002b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'DM Mono', 'Courier New', monospace;
+      overflow: hidden;
+      height: 100vh;
+      height: 100dvh;
+      width: 100vw;
+      overscroll-behavior: none;
+      touch-action: none;
+      transition: background 0.6s ease;
+    }
+
+    /* ============================================
+       FRACTAL CANVAS
+       Pixelated upscale gives retro chunky look
+    ============================================ */
+    #fractalCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* ============================================
+       SPARKLE OVERLAY
+       Full-res canvas for floating glitter particles.
+       Separated so sparkles are crisp while fractals
+       stay chunky.
+    ============================================ */
+    #sparkleCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* ============================================
+       UI OVERLAY — shared positioning base
+    ============================================ */
+    .ui-overlay {
+      position: fixed;
+      z-index: 10;
+      pointer-events: none;
+      /* Smooth show/hide transitions */
+      transition: opacity 0.4s ease;
+    }
+
+    .ui-overlay.ui-hidden {
+      opacity: 0;
+      pointer-events: none !important;
+    }
+
+    /* -- Top bar -- */
+    .top-bar {
+      top: 0; left: 0; right: 0;
+      padding: 16px 20px;
+      padding-top: max(16px, env(safe-area-inset-top));
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: linear-gradient(to bottom,
+        rgba(10, 0, 7, 0.75) 0%,
+        rgba(10, 0, 7, 0.3) 60%,
+        transparent 100%);
+    }
+
+    .app-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-style: italic;
+      letter-spacing: 0.03em;
+      color: var(--accent);
+      text-shadow:
+        0 0 10px var(--primary),
+        0 0 30px var(--primary-glow);
+      animation: titleGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleGlow {
+      0% { text-shadow: 0 0 10px var(--primary), 0 0 30px var(--primary-glow); }
+      100% { text-shadow: 0 0 15px var(--primary), 0 0 50px var(--primary-glow), 0 0 80px var(--primary-glow); }
+    }
+
+    /* -- Mic status badge with frosted glass -- */
+    .mic-status {
+      font-size: 0.7rem;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .mic-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 6px var(--primary);
+    }
+
+    .mic-dot.inactive {
+      background: #444;
+      animation: none;
+      box-shadow: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    /* ============================================
+       AUDIO LEVEL METER
+       Thin bar at top edge — immediate visual
+       proof that mic input is being captured.
+    ============================================ */
+    .audio-meter {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      z-index: 20;
+      background: linear-gradient(to right, var(--primary), var(--highlight));
+      box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary-glow);
+      transition: width 0.1s ease-out;
+    }
+
+    /* ============================================
+       BOTTOM CONTROLS
+    ============================================ */
+    .bottom-bar {
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 20px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      background: linear-gradient(to top,
+        rgba(10, 0, 7, 0.85) 0%,
+        rgba(10, 0, 7, 0.4) 60%,
+        transparent 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .fractal-info {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--accent);
+      padding: 9px 14px;
+      border-radius: 22px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      user-select: none;
+      -webkit-user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn:hover, .btn:active {
+      background: var(--primary);
+      color: var(--bg-dark);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .btn.active {
+      background: var(--primary);
+      color: var(--bg-dark);
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .btn-icon { font-size: 0.9rem; line-height: 1; }
+
+    /* -- Sensitivity slider -- */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+      width: 70%;
+      max-width: 260px;
+    }
+
+    .slider-label {
+      font-size: 0.55rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(to right, var(--primary), var(--highlight));
+      border-radius: 2px;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    input[type="range"]:active { opacity: 1; }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    /* ============================================
+       START SCREEN
+    ============================================ */
+    .start-prompt {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+      padding: 30px;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(255, 45, 107, 0.15), transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(255, 215, 0, 0.08), transparent 50%),
+        radial-gradient(ellipse at center, var(--gradient-deep), var(--bg-dark));
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .start-prompt.leaving {
+      opacity: 0;
+      transform: scale(1.05);
+    }
+
+    .start-prompt.hidden { display: none !important; }
+
+    .start-stars {
+      font-size: 1.2rem;
+      letter-spacing: 0.6em;
+      color: var(--highlight);
+      opacity: 0.6;
+      animation: twinkle 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.3; }
+      100% { opacity: 0.8; }
+    }
+
+    .start-prompt h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(2rem, 8vw, 3.5rem);
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow:
+        0 0 20px var(--primary),
+        0 0 60px var(--primary-glow),
+        0 0 100px rgba(255, 45, 107, 0.15);
+      line-height: 1.15;
+    }
+
+    .start-subtitle {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--accent-soft);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      max-width: 280px;
+      line-height: 1.8;
+    }
+
+    .start-btn {
+      background: var(--primary);
+      color: var(--bg-dark);
+      border: none;
+      padding: 14px 44px;
+      border-radius: 30px;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-style: italic;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.3s ease;
+      box-shadow:
+        0 0 30px var(--primary-glow),
+        inset 0 0 30px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .start-btn:hover, .start-btn:active {
+      transform: scale(1.06);
+      box-shadow:
+        0 0 50px var(--primary-glow),
+        0 0 100px var(--primary-glow),
+        inset 0 0 30px rgba(255, 255, 255, 0.15);
+    }
+
+    /* Sheen sweep on button */
+    .start-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+      animation: sheen 3s ease-in-out infinite;
+    }
+
+    @keyframes sheen {
+      0% { left: -100%; }
+      50% { left: 150%; }
+      100% { left: 150%; }
+    }
+
+    .start-note {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      max-width: 240px;
+      line-height: 1.5;
+    }
+
+    /* ============================================
+       QUOTE OVERLAY
+       Centered text that fades in/out over the
+       fractal. Uses CSS animations for smooth
+       transitions between quotes.
+    ============================================ */
+    .quote-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 3; /* Above sparkles, below UI */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px 30px;
+      pointer-events: none;
+      /* Dim the fractal slightly so text is readable */
+      background: radial-gradient(
+        ellipse at center,
+        rgba(10, 0, 7, 0.5) 0%,
+        rgba(10, 0, 7, 0.2) 60%,
+        transparent 100%
+      );
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .quote-overlay.visible {
+      opacity: 1;
+    }
+
+    .quote-text {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(1.3rem, 5vw, 2.2rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      text-shadow:
+        0 0 20px var(--primary),
+        0 0 40px var(--primary-glow),
+        0 2px 10px rgba(0, 0, 0, 0.8);
+      line-height: 1.4;
+      max-width: 600px;
+      /* Individual quote fade animation */
+      animation: quoteFade 1s ease-out;
+    }
+
+    @keyframes quoteFade {
+      0% { opacity: 0; transform: translateY(12px) scale(0.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .quote-source {
+      margin-top: 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 300;
+      color: var(--highlight);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      opacity: 0.7;
+    }
+
+    /* ============================================
+       CUSTOM QUOTES MODAL
+       Slide-up panel for adding/removing quotes.
+       Frosted glass background, theme-aware.
+    ============================================ */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 50;
+      background: rgba(10, 0, 7, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 51;
+      max-height: 70vh;
+      background: linear-gradient(to bottom, rgba(45, 10, 49, 0.95), rgba(10, 0, 7, 0.98));
+      border-top: 1px solid var(--surface-border);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px;
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-backdrop.visible .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: var(--accent); }
+
+    /* Input row for adding new quotes */
+    .add-quote-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .add-quote-row input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .add-quote-row input:focus {
+      border-color: var(--primary);
+    }
+
+    .add-quote-row input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .add-quote-row button {
+      background: var(--primary);
+      color: var(--bg-dark);
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 400;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .add-quote-row button:hover { opacity: 0.85; }
+
+    /* List of existing quotes */
+    .quote-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 35vh;
+      overflow-y: auto;
+    }
+
+    .quote-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 10px;
+      font-size: 0.7rem;
+      color: var(--accent-soft);
+      line-height: 1.4;
+    }
+
+    .quote-item-text {
+      flex: 1;
+      /* Show the quote and source on separate lines */
+    }
+
+    .quote-item-source {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .quote-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 6px;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .quote-delete:hover { color: var(--primary); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- START SCREEN -->
+  <div class="start-prompt" id="startPrompt">
+    <div class="start-stars">✦ ✦ ✦</div>
+    <h1>Pink Pony<br>Fractals</h1>
+    <p class="start-subtitle">a mic-reactive fractal visualizer</p>
+    <button class="start-btn" id="startBtn">✦ Enter ✦</button>
+    <p class="start-note">Allow microphone access for the full audio-reactive experience</p>
+  </div>
+
+  <!-- Audio level meter -->
+  <div class="audio-meter" id="audioMeter"></div>
+
+  <!-- Fractal (low-res) -->
+  <canvas id="fractalCanvas"></canvas>
+
+  <!-- Sparkle particles (full-res) -->
+  <canvas id="sparkleCanvas"></canvas>
+
+  <!-- Quote overlay — visible in quote mode -->
+  <div class="quote-overlay" id="quoteOverlay">
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-source" id="quoteSource"></div>
+  </div>
+
+  <!-- Custom quotes modal (slide-up panel) -->
+  <div class="modal-backdrop" id="quoteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">✦ Your Quotes</span>
+        <button class="modal-close" id="modalClose">×</button>
+      </div>
+      <div class="add-quote-row">
+        <input type="text" id="newQuoteInput" placeholder="Add a favorite quote or lyric...">
+        <button id="addQuoteBtn">Add ✦</button>
+      </div>
+      <div class="quote-list" id="quoteList"></div>
+    </div>
+  </div>
+
+  <!-- Tap target for hiding UI — invisible layer over canvases -->
+  <div id="tapTarget" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:5;"></div>
+
+  <!-- Top UI -->
+  <div class="ui-overlay top-bar" id="topBar">
+    <div class="app-title">✦ Pink Pony Fractals</div>
+    <div class="mic-status">
+      <span class="mic-dot inactive" id="micDot"></span>
+      <span id="micLabel">mic off</span>
+    </div>
+  </div>
+
+  <!-- Bottom UI -->
+  <div class="ui-overlay bottom-bar" id="bottomBar">
+    <div class="fractal-info" id="fractalInfo">✦ Julia Set · Pink Pony Club ✦</div>
+    <div class="controls">
+      <button class="btn" id="btnFractal"><span class="btn-icon">◇</span> Fractal</button>
+      <button class="btn" id="btnPalette"><span class="btn-icon">♦</span> Theme</button>
+      <button class="btn" id="btnMic"><span class="btn-icon">⏺</span> Mic</button>
+      <button class="btn" id="btnQuotes"><span class="btn-icon">✧</span> Quotes</button>
+      <button class="btn" id="btnEditQuotes"><span class="btn-icon">✎</span> Edit</button>
+      <button class="btn" id="btnFullscreen"><span class="btn-icon">⛶</span> Full</button>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">Sensitivity</span>
+      <input type="range" id="sensitivity" min="1" max="100" value="50">
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // APP STATE — single source of truth
+    // ============================================
+    const state = {
+      micActive: false,
+      audioContext: null,
+      analyser: null,
+      micStream: null,
+      audioLevel: 0,
+      bassLevel: 0,
+      trebleLevel: 0,
+      sensitivity: 1.0,
+      fractalType: 0,
+      paletteIndex: 0,
+      time: 0,
+      animFrame: null,
+      uiVisible: true,
+      // Quote mode
+      quoteMode: false,
+      quoteIndex: 0,
+      quoteTimer: null,
+    };
+
+    const FRACTAL_TYPES = ['Julia Set', 'Mandelbrot', 'Burning Ship'];
+    const THEME_NAMES = ['Pink Pony Club', 'Red Wine Supernova', 'Midwest Princess'];
+    const THEME_CLASSES = ['', 'theme-redwine', 'theme-midwest'];
+
+    // ============================================
+    // FRACTAL CANVAS — low-res for performance
+    // ============================================
+    const canvas = document.getElementById('fractalCanvas');
+    const ctx = canvas.getContext('2d');
+    let imgData, pixels;
+    const RENDER_SCALE = 0.25;
+
+    function resizeCanvas() {
+      canvas.width = Math.floor(window.innerWidth * RENDER_SCALE);
+      canvas.height = Math.floor(window.innerHeight * RENDER_SCALE);
+      imgData = ctx.createImageData(canvas.width, canvas.height);
+      pixels = imgData.data;
+      sparkleCanvas.width = window.innerWidth;
+      sparkleCanvas.height = window.innerHeight;
+    }
+
+    // ============================================
+    // SPARKLE OVERLAY
+    // Floating glitter that reacts to audio.
+    // Bass hits make them jitter; volume controls
+    // brightness. Theme colors are read from CSS
+    // vars so they auto-update on theme switch.
+    // ============================================
+    const sparkleCanvas = document.getElementById('sparkleCanvas');
+    const sparkleCtx = sparkleCanvas.getContext('2d');
+    const MAX_SPARKLES = 60;
+    const sparkles = [];
+
+    function createSparkle() {
+      return {
+        x: Math.random() * (sparkleCanvas.width || window.innerWidth),
+        y: Math.random() * (sparkleCanvas.height || window.innerHeight),
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: -Math.random() * 0.8 - 0.2,
+        size: Math.random() * 2.5 + 0.5,
+        opacity: Math.random(),
+        phase: Math.random() * Math.PI * 2,
+        speed: Math.random() * 2 + 1,
+      };
+    }
+
+    for (let i = 0; i < MAX_SPARKLES; i++) sparkles.push(createSparkle());
+
+    function renderSparkles() {
+      const w = sparkleCanvas.width;
+      const h = sparkleCanvas.height;
+      sparkleCtx.clearRect(0, 0, w, h);
+
+      // Read live CSS vars for theme-aware sparkle colors
+      const style = getComputedStyle(document.body);
+      const primaryColor = style.getPropertyValue('--primary').trim();
+      const highlightColor = style.getPropertyValue('--highlight').trim();
+      const audioBrightness = 0.3 + state.audioLevel * state.sensitivity * 0.7;
+
+      for (const s of sparkles) {
+        const audioKick = state.bassLevel * state.sensitivity * 2;
+        s.x += s.vx + (Math.random() - 0.5) * audioKick;
+        s.y += s.vy - audioKick * 0.5;
+        s.phase += 0.03 * s.speed;
+
+        // Wrap around edges
+        if (s.y < -10) { s.y = h + 10; s.x = Math.random() * w; }
+        if (s.x < -10) s.x = w + 10;
+        if (s.x > w + 10) s.x = -10;
+
+        const twinkle = (Math.sin(s.phase) + 1) / 2;
+        const alpha = twinkle * audioBrightness * s.opacity;
+        const color = s.phase % 6 < 3 ? primaryColor : highlightColor;
+
+        // Core sparkle
+        sparkleCtx.beginPath();
+        sparkleCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        sparkleCtx.fillStyle = color;
+        sparkleCtx.globalAlpha = alpha;
+        sparkleCtx.fill();
+
+        // Soft glow halo
+        sparkleCtx.beginPath();
+        sparkleCtx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
+        sparkleCtx.globalAlpha = alpha * 0.15;
+        sparkleCtx.fill();
+      }
+      sparkleCtx.globalAlpha = 1;
+    }
+
+    // ============================================
+    // COLOR PALETTES — matches the 3 CSS themes
+    // ============================================
+    const PALETTES = [
+      // Pink Pony Club
+      [[10,0,7],[139,0,53],[255,45,107],[255,105,180],[255,215,0],[255,240,245]],
+      // Red Wine Supernova
+      [[10,0,3],[100,0,15],[220,20,60],[255,99,71],[255,193,7],[255,255,220]],
+      // Midwest Princess
+      [[16,0,43],[80,20,120],[199,125,255],[224,170,255],[128,255,219],[248,240,255]],
+    ];
+
+    function getColor(t, palIdx) {
+      const pal = PALETTES[palIdx % PALETTES.length];
+      const pos = t * (pal.length - 1);
+      const idx = Math.floor(pos);
+      const frac = pos - idx;
+      const c1 = pal[Math.min(idx, pal.length - 1)];
+      const c2 = pal[Math.min(idx + 1, pal.length - 1)];
+      return [
+        c1[0] + (c2[0] - c1[0]) * frac,
+        c1[1] + (c2[1] - c1[1]) * frac,
+        c1[2] + (c2[2] - c1[2]) * frac,
+      ];
+    }
+
+    // ============================================
+    // FRACTAL MATH
+    // ============================================
+    function juliaSet(zr, zi, cr, ci, maxIter) {
+      let r = zr, i = zi;
+      for (let n = 0; n < maxIter; n++) {
+        const r2 = r * r, i2 = i * i;
+        if (r2 + i2 > 4) return n / maxIter;
+        i = 2 * r * i + ci;
+        r = r2 - i2 + cr;
+      }
+      return 0;
+    }
+
+    function mandelbrot(cr, ci, maxIter) {
+      let r = 0, i = 0;
+      for (let n = 0; n < maxIter; n++) {
+        const r2 = r * r, i2 = i * i;
+        if (r2 + i2 > 4) return n / maxIter;
+        i = 2 * r * i + ci;
+        r = r2 - i2 + cr;
+      }
+      return 0;
+    }
+
+    function burningShip(cr, ci, maxIter) {
+      let r = 0, i = 0;
+      for (let n = 0; n < maxIter; n++) {
+        const r2 = r * r, i2 = i * i;
+        if (r2 + i2 > 4) return n / maxIter;
+        i = Math.abs(2 * r * i) + ci;
+        r = r2 - i2 + cr;
+      }
+      return 0;
+    }
+
+    // ============================================
+    // RENDER LOOP — runs every frame
+    // ============================================
+    function render() {
+      state.time += 0.008;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Update audio
+      if (state.micActive && state.analyser) {
+        updateAudioLevels();
+      } else {
+        state.audioLevel = 0.15 + 0.1 * Math.sin(state.time * 0.7);
+        state.bassLevel = 0.2 + 0.15 * Math.sin(state.time * 0.3);
+        state.trebleLevel = 0.1 + 0.1 * Math.sin(state.time * 1.1);
+      }
+
+      const sens = state.sensitivity;
+      const audio = state.audioLevel * sens;
+      const bass = state.bassLevel * sens;
+      const treble = state.trebleLevel * sens;
+
+      // Audio meter bar
+      const meterWidth = Math.min(state.audioLevel * sens * 150, 100);
+      document.getElementById('audioMeter').style.width = meterWidth + '%';
+
+      // Fractal parameters modulated by audio
+      const maxIter = Math.floor(40 + bass * 60);
+      const cr = -0.7 + 0.3 * Math.sin(state.time + bass * 2);
+      const ci = 0.27 + 0.15 * Math.cos(state.time * 0.7 + treble * 3);
+      const zoom = 2.5 - audio * 0.8;
+      const panX = 0.1 * Math.sin(state.time * 0.2) * (1 + bass);
+      const panY = 0.1 * Math.cos(state.time * 0.15) * (1 + treble);
+      const aspect = w / h;
+
+      // Compute every pixel
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const real = ((x / w - 0.5) * aspect) * zoom + panX;
+          const imag = ((y / h - 0.5)) * zoom + panY;
+
+          let val;
+          switch (state.fractalType) {
+            case 0: val = juliaSet(real, imag, cr, ci, maxIter); break;
+            case 1: val = mandelbrot(real, imag, maxIter); break;
+            case 2: val = burningShip(real, imag + 0.5, maxIter); break;
+          }
+
+          const colorShift = audio * 0.3;
+          const t = (val + colorShift) % 1;
+          const [r, g, b] = getColor(t, state.paletteIndex);
+
+          const idx = (y * w + x) * 4;
+          pixels[idx] = r;
+          pixels[idx + 1] = g;
+          pixels[idx + 2] = b;
+          pixels[idx + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      renderSparkles();
+      state.animFrame = requestAnimationFrame(render);
+    }
+
+    // ============================================
+    // AUDIO ANALYSIS — FFT frequency extraction
+    // ============================================
+    function updateAudioLevels() {
+      const bufferLength = state.analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      state.analyser.getByteFrequencyData(dataArray);
+
+      let sum = 0, bassSum = 0, trebleSum = 0;
+      const bassEnd = Math.floor(bufferLength * 0.15);
+      const trebleStart = Math.floor(bufferLength * 0.5);
+
+      for (let i = 0; i < bufferLength; i++) {
+        const val = dataArray[i] / 255;
+        sum += val;
+        if (i < bassEnd) bassSum += val;
+        if (i > trebleStart) trebleSum += val;
+      }
+
+      const smoothing = 0.15;
+      state.audioLevel = lerp(state.audioLevel, sum / bufferLength, smoothing);
+      state.bassLevel = lerp(state.bassLevel, bassSum / bassEnd, smoothing);
+      state.trebleLevel = lerp(state.trebleLevel, trebleSum / (bufferLength - trebleStart), smoothing);
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    // ============================================
+    // MIC CONTROL
+    // ============================================
+    async function enableMic() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        state.analyser = state.audioContext.createAnalyser();
+        state.analyser.fftSize = 512;
+        state.analyser.smoothingTimeConstant = 0.8;
+        const source = state.audioContext.createMediaStreamSource(stream);
+        source.connect(state.analyser);
+        state.micStream = stream;
+        state.micActive = true;
+        updateMicUI(true);
+      } catch (err) {
+        console.error('Mic access denied:', err);
+        alert('Mic access needed for audio reactivity. Auto-animation mode active!');
+      }
+    }
+
+    function disableMic() {
+      if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
+      if (state.audioContext) state.audioContext.close();
+      state.micActive = false;
+      state.audioContext = null;
+      state.analyser = null;
+      state.micStream = null;
+      updateMicUI(false);
+    }
+
+    function updateMicUI(active) {
+      const dot = document.getElementById('micDot');
+      const label = document.getElementById('micLabel');
+      const btn = document.getElementById('btnMic');
+      if (active) {
+        dot.classList.remove('inactive');
+        label.textContent = 'mic live';
+        btn.classList.add('active');
+        btn.innerHTML = '<span class="btn-icon">⏹</span> Mic';
+      } else {
+        dot.classList.add('inactive');
+        label.textContent = 'mic off';
+        btn.classList.remove('active');
+        btn.innerHTML = '<span class="btn-icon">⏺</span> Mic';
+        document.getElementById('audioMeter').style.width = '0%';
+      }
+    }
+
+    // ============================================
+    // THEME SWITCHING
+    // Swaps body class → all CSS vars update →
+    // fractal palette + sparkle colors + UI all
+    // change together in one smooth transition.
+    // ============================================
+    function cycleTheme() {
+      state.paletteIndex = (state.paletteIndex + 1) % THEME_NAMES.length;
+      document.body.className = THEME_CLASSES[state.paletteIndex];
+      updateInfoText();
+    }
+
+    function updateInfoText() {
+      const mode = state.quoteMode ? 'Quote Mode' : FRACTAL_TYPES[state.fractalType];
+      document.getElementById('fractalInfo').textContent =
+        '✦ ' + mode + ' · ' + THEME_NAMES[state.paletteIndex] + ' ✦';
+    }
+
+    // ============================================
+    // FULLSCREEN TOGGLE
+    // ============================================
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    // ============================================
+    // TAP TO HIDE UI — immersive mode
+    // ============================================
+    function toggleUI() {
+      state.uiVisible = !state.uiVisible;
+      document.getElementById('topBar').classList.toggle('ui-hidden', !state.uiVisible);
+      document.getElementById('bottomBar').classList.toggle('ui-hidden', !state.uiVisible);
+    }
+
+    // ============================================
+    // QUOTE SYSTEM
+    // Inspirational themes/sentiments inspired by
+    // Chappell Roan's music. These are paraphrased
+    // themes, NOT direct lyrics (copyright).
+    // Users can add their own favorites via the
+    // Edit modal — those persist in localStorage.
+    // ============================================
+
+    // Default quotes: thematic sentiments from her music
+    const DEFAULT_QUOTES = [
+      { text: "You deserve a love that feels like dancing under neon lights", source: "on finding joy" },
+      { text: "Set your boundaries like they're made of glitter and steel", source: "on self-worth" },
+      { text: "The midwest made you, but it doesn't get to keep you small", source: "on growing" },
+      { text: "Be the kind of bold that makes the whole room nervous", source: "on confidence" },
+      { text: "Sometimes the bravest thing is letting yourself want more", source: "on courage" },
+      { text: "Your softness is not weakness — it's your superpower", source: "on vulnerability" },
+      { text: "Burn so bright they need sunglasses just to look at you", source: "on being unapologetic" },
+      { text: "Home is wherever you stop apologizing for who you are", source: "on belonging" },
+      { text: "Love yourself the way you love your favorite song — loud and on repeat", source: "on self-love" },
+      { text: "You are not too much. They were just not enough.", source: "on knowing your worth" },
+      { text: "Some fires aren't meant to be put out", source: "on passion" },
+      { text: "The right people won't ask you to dim your sparkle", source: "on chosen family" },
+    ];
+
+    // Load custom quotes from localStorage, fall back to defaults
+    // Why: localStorage lets your wife's custom quotes survive
+    // page refreshes and browser restarts
+    function loadQuotes() {
+      try {
+        const saved = localStorage.getItem('pinkPonyQuotes');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // Validate structure: must be array of {text, source}
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        // localStorage might be unavailable (private browsing, etc.)
+        console.warn('Could not load saved quotes:', e);
+      }
+      return [...DEFAULT_QUOTES];
+    }
+
+    function saveQuotes(quotes) {
+      try {
+        localStorage.setItem('pinkPonyQuotes', JSON.stringify(quotes));
+      } catch (e) {
+        console.warn('Could not save quotes:', e);
+      }
+    }
+
+    let quotes = loadQuotes();
+
+    // Show a specific quote with fade animation
+    function showQuote(index) {
+      const overlay = document.getElementById('quoteOverlay');
+      const textEl = document.getElementById('quoteText');
+      const sourceEl = document.getElementById('quoteSource');
+
+      if (quotes.length === 0) {
+        textEl.textContent = 'Add your favorite quotes ✦';
+        sourceEl.textContent = 'tap edit to begin';
+        return;
+      }
+
+      const q = quotes[index % quotes.length];
+      // Force re-trigger of the CSS fade animation by
+      // briefly removing and re-adding the element content
+      textEl.style.animation = 'none';
+      textEl.offsetHeight; // Trigger reflow (forces browser to reset)
+      textEl.style.animation = '';
+      textEl.textContent = q.text;
+      sourceEl.textContent = '— ' + q.source;
+    }
+
+    // Cycle to next quote
+    function nextQuote() {
+      state.quoteIndex = (state.quoteIndex + 1) % Math.max(quotes.length, 1);
+      showQuote(state.quoteIndex);
+    }
+
+    // Toggle quote mode on/off
+    function toggleQuoteMode() {
+      state.quoteMode = !state.quoteMode;
+      const overlay = document.getElementById('quoteOverlay');
+      const btn = document.getElementById('btnQuotes');
+
+      if (state.quoteMode) {
+        // Enter quote mode: disable mic, show quotes
+        if (state.micActive) disableMic();
+        overlay.classList.add('visible');
+        btn.classList.add('active');
+        showQuote(state.quoteIndex);
+        // Auto-cycle quotes every 8 seconds
+        state.quoteTimer = setInterval(nextQuote, 8000);
+      } else {
+        // Exit quote mode
+        overlay.classList.remove('visible');
+        btn.classList.remove('active');
+        clearInterval(state.quoteTimer);
+        state.quoteTimer = null;
+      }
+
+      updateInfoText();
+    }
+
+    // ============================================
+    // QUOTE MODAL — add/remove custom quotes
+    // ============================================
+    function openQuoteModal() {
+      document.getElementById('quoteModal').classList.add('visible');
+      renderQuoteList();
+    }
+
+    function closeQuoteModal() {
+      document.getElementById('quoteModal').classList.remove('visible');
+    }
+
+    function renderQuoteList() {
+      const list = document.getElementById('quoteList');
+      list.innerHTML = '';
+
+      quotes.forEach((q, i) => {
+        const item = document.createElement('div');
+        item.className = 'quote-item';
+        item.innerHTML = `
+          <div class="quote-item-text">
+            "${q.text}"
+            <div class="quote-item-source">${q.source}</div>
+          </div>
+          <button class="quote-delete" data-index="${i}">×</button>
+        `;
+        list.appendChild(item);
+      });
+
+      // Attach delete handlers
+      list.querySelectorAll('.quote-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          quotes.splice(idx, 1);
+          saveQuotes(quotes);
+          renderQuoteList();
+          // If we deleted the current quote, reset index
+          if (state.quoteIndex >= quotes.length) state.quoteIndex = 0;
+          if (state.quoteMode) showQuote(state.quoteIndex);
+        });
+      });
+    }
+
+    function addCustomQuote() {
+      const input = document.getElementById('newQuoteInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      // Add with a default source — user can just type the quote
+      quotes.push({ text: text, source: 'custom' });
+      saveQuotes(quotes);
+      input.value = '';
+      renderQuoteList();
+    }
+
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+
+    // Start
+    document.getElementById('startBtn').addEventListener('click', async () => {
+      const prompt = document.getElementById('startPrompt');
+      prompt.classList.add('leaving');
+      setTimeout(() => prompt.classList.add('hidden'), 600);
+      await enableMic();
+      render();
+    });
+
+    // Controls
+    document.getElementById('btnMic').addEventListener('click', () => {
+      state.micActive ? disableMic() : enableMic();
+    });
+
+    document.getElementById('btnFractal').addEventListener('click', () => {
+      state.fractalType = (state.fractalType + 1) % FRACTAL_TYPES.length;
+      updateInfoText();
+    });
+
+    document.getElementById('btnPalette').addEventListener('click', cycleTheme);
+    document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
+
+    // Quote mode toggle
+    document.getElementById('btnQuotes').addEventListener('click', toggleQuoteMode);
+
+    // Edit quotes modal
+    document.getElementById('btnEditQuotes').addEventListener('click', openQuoteModal);
+    document.getElementById('modalClose').addEventListener('click', closeQuoteModal);
+
+    // Close modal when clicking backdrop (outside the panel)
+    document.getElementById('quoteModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('quoteModal')) closeQuoteModal();
+    });
+
+    // Add quote button and Enter key in input
+    document.getElementById('addQuoteBtn').addEventListener('click', addCustomQuote);
+    document.getElementById('newQuoteInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addCustomQuote();
+    });
+
+    // Tap canvas to also advance quote (if in quote mode)
+    document.getElementById('tapTarget').addEventListener('click', () => {
+      if (state.quoteMode) {
+        // In quote mode, tap cycles quotes instead of hiding UI
+        nextQuote();
+      } else {
+        toggleUI();
+      }
+    });
+
+    // Sensitivity
+    document.getElementById('sensitivity').addEventListener('input', (e) => {
+      state.sensitivity = e.target.value / 50;
+    });
+
+    // Resize
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ============================================
+    // SERVICE WORKER REGISTRATION
+    // Registers sw.js which caches the app for
+    // offline use and enables PWA installability.
+    // The 'if' check ensures we only try in
+    // browsers that support service workers.
+    // ============================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((reg) => console.log('[PWA] Service worker registered:', reg.scope))
+          .catch((err) => console.warn('[PWA] SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
