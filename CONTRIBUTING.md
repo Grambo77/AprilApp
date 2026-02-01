@@ -70,4 +70,4 @@ AprilApp is built with love, curiosity, and experimentation.
 Be respectful, inclusive, and constructive.  
 If something makes the app more joyful, it belongs here.
 
-Thanks for being part of it 🌈
+Thanks for being part of it.
