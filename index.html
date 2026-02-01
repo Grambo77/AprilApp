@@ -123,6 +123,92 @@
       --gradient-deep: #140e00;
     }
 
+    /* ---- SABRINA CARPENTER THEMES ---- */
+    body.theme-espresso {
+      /* Espresso — rich coffee browns, cream, caramel */
+      --bg-dark: #0e0804;
+      --primary: #c48a3f;
+      --primary-glow: rgba(196, 138, 63, 0.4);
+      --accent: #daa06d;
+      --accent-soft: #f0d5a8;
+      --highlight: #fff5e1;
+      --surface: rgba(196, 138, 63, 0.12);
+      --surface-border: rgba(196, 138, 63, 0.4);
+      --text-primary: #fff8f0;
+      --text-muted: rgba(218, 160, 109, 0.5);
+      --gradient-deep: #1a0e02;
+    }
+
+    body.theme-pleasepleasepl {
+      /* Please Please Please — vintage blush, rose gold, cream */
+      --primary: #e8838a;
+      --primary-glow: rgba(232, 131, 138, 0.4);
+      --accent: #f4b4b8;
+      --accent-soft: #fddede;
+      --highlight: #c9a96e;
+      --surface: rgba(232, 131, 138, 0.12);
+      --surface-border: rgba(232, 131, 138, 0.4);
+      --text-primary: #fff5f5;
+      --text-muted: rgba(244, 180, 184, 0.5);
+      --gradient-deep: #1a0808;
+    }
+
+    body.theme-taste {
+      /* Taste — bold cherry red, cream, black */
+      --primary: #cc0033;
+      --primary-glow: rgba(204, 0, 51, 0.4);
+      --accent: #ff3355;
+      --accent-soft: #ff8899;
+      --highlight: #ffe6cc;
+      --surface: rgba(204, 0, 51, 0.12);
+      --surface-border: rgba(204, 0, 51, 0.4);
+      --text-primary: #fff0f3;
+      --text-muted: rgba(255, 51, 85, 0.5);
+      --gradient-deep: #180008;
+    }
+
+    body.theme-nonsense {
+      /* Nonsense — playful lavender, bubblegum, sparkle */
+      --primary: #b366ff;
+      --primary-glow: rgba(179, 102, 255, 0.4);
+      --accent: #ff85c8;
+      --accent-soft: #ffbee6;
+      --highlight: #66ffcc;
+      --surface: rgba(179, 102, 255, 0.12);
+      --surface-border: rgba(179, 102, 255, 0.4);
+      --text-primary: #f8f0ff;
+      --text-muted: rgba(255, 133, 200, 0.5);
+      --gradient-deep: #0f0020;
+    }
+
+    body.theme-feather {
+      /* Feather — airy sky blue, white, soft gold */
+      --primary: #5ba8c8;
+      --primary-glow: rgba(91, 168, 200, 0.4);
+      --accent: #8ed1e0;
+      --accent-soft: #c8eef5;
+      --highlight: #f0d080;
+      --surface: rgba(91, 168, 200, 0.12);
+      --surface-border: rgba(91, 168, 200, 0.4);
+      --text-primary: #f0faff;
+      --text-muted: rgba(142, 209, 224, 0.5);
+      --gradient-deep: #040e14;
+    }
+
+    body.theme-shortnsw {
+      /* Short n' Sweet — golden blonde, peach, warm white */
+      --primary: #e0a830;
+      --primary-glow: rgba(224, 168, 48, 0.4);
+      --accent: #f5c96a;
+      --accent-soft: #ffe8b0;
+      --highlight: #ff9e80;
+      --surface: rgba(224, 168, 48, 0.12);
+      --surface-border: rgba(224, 168, 48, 0.4);
+      --text-primary: #fffdf5;
+      --text-muted: rgba(245, 201, 106, 0.5);
+      --gradient-deep: #141000;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -1076,6 +1162,13 @@
       transition: all 0.2s ease;
     }
 
+    .btn.selected {
+      border-color: var(--primary);
+      background: var(--surface);
+      box-shadow: 0 0 10px var(--primary-glow);
+      color: var(--text-primary);
+    }
+
     .trivia-close-btn:active { transform: scale(0.9); }
   </style>
 </head>
@@ -1084,8 +1177,12 @@
   <!-- START SCREEN -->
   <div class="start-prompt" id="startPrompt">
     <div class="start-stars">✦ ✦ ✦</div>
-    <h1>Pink Pony<br>Fractals</h1>
-    <p class="start-subtitle">a mic-reactive fractal visualizer</p>
+    <h1 id="startTitle">Pink Pony<br>Fractals</h1>
+    <p class="start-subtitle" id="startSubtitle">a mic-reactive fractal visualizer</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin:16px 0 8px;">
+      <button class="btn selected" id="pickChappell" style="pointer-events:auto;padding:10px 20px;font-size:0.75rem;">✦ Chappell Roan</button>
+      <button class="btn" id="pickSabrina" style="pointer-events:auto;padding:10px 20px;font-size:0.75rem;">✦ Sabrina Carpenter</button>
+    </div>
     <button class="start-btn" id="startBtn">✦ Enter ✦</button>
     <p class="start-note">Allow microphone access for the full audio-reactive experience</p>
   </div>
@@ -1201,7 +1298,7 @@
 
   <!-- Top UI -->
   <div class="ui-overlay top-bar" id="topBar">
-    <div class="app-title">✦ Pink Pony Fractals</div>
+    <div class="app-title" id="appTitle">✦ Pink Pony Fractals</div>
     <div class="mic-status">
       <span class="mic-dot inactive" id="micDot"></span>
       <span id="micLabel">mic off</span>
@@ -1267,8 +1364,102 @@
     };
 
     const FRACTAL_TYPES = ['Julia Set', 'Mandelbrot', 'Burning Ship', 'Kaleidoscope'];
-    const THEME_NAMES = ['Pink Pony Club', 'Red Wine Supernova', 'Midwest Princess', 'Good Luck, Babe!', 'Femininomenon', 'Naked in Manhattan'];
-    const THEME_CLASSES = ['', 'theme-redwine', 'theme-midwest', 'theme-goodluck', 'theme-femininomenon', 'theme-naked'];
+
+    // ============================================
+    // ARTIST PACKS
+    // All artist-specific data lives here. When the
+    // user picks an artist, switchArtist() swaps the
+    // active data arrays so the entire app re-skins.
+    // ============================================
+    let activeArtist = 'chappell'; // default
+
+    const ARTISTS = {
+      chappell: {
+        title: 'Pink Pony<br>Fractals',
+        subtitle: 'a mic-reactive fractal visualizer',
+        appTitle: '✦ Pink Pony Fractals',
+        scoreLabel: 'Midwest Princess Rating',
+        themeNames: ['Pink Pony Club', 'Red Wine Supernova', 'Midwest Princess', 'Good Luck, Babe!', 'Femininomenon', 'Naked in Manhattan'],
+        themeClasses: ['', 'theme-redwine', 'theme-midwest', 'theme-goodluck', 'theme-femininomenon', 'theme-naked'],
+        palettes: [
+          [[10,0,7],[139,0,53],[255,45,107],[255,105,180],[255,215,0],[255,240,245]],
+          [[10,0,3],[100,0,15],[220,20,60],[255,99,71],[255,193,7],[255,255,220]],
+          [[16,0,43],[80,20,120],[199,125,255],[224,170,255],[128,255,219],[248,240,255]],
+          [[10,5,5],[32,100,100],[255,107,107],[255,160,122],[32,178,170],[255,220,200]],
+          [[0,5,14],[0,40,80],[0,212,255],[0,229,255],[255,0,170],[200,240,255]],
+          [[14,10,0],[100,60,0],[232,163,23],[240,199,94],[255,140,105],[255,252,240]],
+        ],
+      },
+      sabrina: {
+        title: 'Short n\' Sweet<br>Fractals',
+        subtitle: 'a mic-reactive fractal visualizer',
+        appTitle: '✦ Short n\' Sweet Fractals',
+        scoreLabel: 'Short n\' Sweet Rating',
+        themeNames: ['Espresso', 'Please Please Please', 'Taste', 'Nonsense', 'Feather', 'Short n\' Sweet'],
+        themeClasses: ['theme-espresso', 'theme-pleasepleasepl', 'theme-taste', 'theme-nonsense', 'theme-feather', 'theme-shortnsw'],
+        palettes: [
+          // Espresso — coffee browns, cream, caramel
+          [[14,8,4],[80,50,20],[196,138,63],[218,160,109],[240,213,168],[255,245,225]],
+          // Please Please Please — vintage blush, rose gold
+          [[26,8,8],[130,50,55],[232,131,138],[244,180,184],[201,169,110],[253,222,222]],
+          // Taste — bold cherry red, cream, dramatic
+          [[24,0,8],[100,0,25],[204,0,51],[255,51,85],[255,136,153],[255,230,204]],
+          // Nonsense — playful lavender, bubblegum, sparkle
+          [[15,0,32],[70,20,120],[179,102,255],[255,133,200],[102,255,204],[255,190,230]],
+          // Feather — airy sky blue, white, soft gold
+          [[4,14,20],[30,70,90],[91,168,200],[142,209,224],[240,208,128],[240,250,255]],
+          // Short n' Sweet — golden blonde, peach, warm
+          [[20,16,0],[100,70,10],[224,168,48],[245,201,106],[255,158,128],[255,253,245]],
+        ],
+      },
+    };
+
+    // These "active" variables get swapped by switchArtist().
+    // The rest of the app reads these, so nothing else needs to change.
+    let THEME_NAMES = ARTISTS.chappell.themeNames;
+    let THEME_CLASSES = ARTISTS.chappell.themeClasses;
+    let PALETTES = ARTISTS.chappell.palettes;
+
+    // Switch the active artist — swaps all data arrays
+    // and resets the UI to reflect the new artist
+    function switchArtist(artistKey) {
+      const artist = ARTISTS[artistKey];
+      if (!artist) return;
+      activeArtist = artistKey;
+
+      // Swap all the active data arrays
+      THEME_NAMES = artist.themeNames;
+      THEME_CLASSES = artist.themeClasses;
+      PALETTES = artist.palettes;
+      DEFAULT_QUOTES = artist.defaultQuotes;
+      CAMERA_FILTERS = artist.cameraFilters;
+      TRIVIA_QUESTIONS = artist.triviaQuestions;
+      TRIVIA_RESULTS = artist.triviaResults;
+
+      // Reset indices to 0 so we don't overflow into non-existent themes
+      state.paletteIndex = 0;
+      state.themeIndex = 0;
+      state.cameraFilterIndex = 0;
+      state.editorFilterIndex = 0;
+
+      // Apply first theme's CSS class
+      document.body.className = THEME_CLASSES[0];
+
+      // Update UI text
+      document.getElementById('appTitle').textContent = artist.appTitle;
+      document.querySelector('.trivia-score-label').textContent = artist.scoreLabel;
+
+      // Reload quotes for this artist (from localStorage or defaults)
+      quotes = loadQuotes();
+
+      // Update camera filter name display if visible
+      document.getElementById('cameraFilterName').textContent =
+        '✦ ' + CAMERA_FILTERS[0].name + ' ✦';
+      document.getElementById('editorFilterName').textContent =
+        '✦ ' + CAMERA_FILTERS[0].name + ' ✦';
+
+      updateInfoText();
+    }
 
     // ============================================
     // FRACTAL CANVAS — low-res for performance
@@ -1357,22 +1548,9 @@
     }
 
     // ============================================
-    // COLOR PALETTES — matches the 3 CSS themes
+    // COLOR PALETTES — reads from active PALETTES variable
+    // which is set by switchArtist()
     // ============================================
-    const PALETTES = [
-      // 0: Pink Pony Club — hot pinks, neon, gold
-      [[10,0,7],[139,0,53],[255,45,107],[255,105,180],[255,215,0],[255,240,245]],
-      // 1: Red Wine Supernova — crimsons, amber, cream
-      [[10,0,3],[100,0,15],[220,20,60],[255,99,71],[255,193,7],[255,255,220]],
-      // 2: Midwest Princess — purple, lavender, mint
-      [[16,0,43],[80,20,120],[199,125,255],[224,170,255],[128,255,219],[248,240,255]],
-      // 3: Good Luck, Babe! — teal, coral, sunset
-      [[10,5,5],[32,100,100],[255,107,107],[255,160,122],[32,178,170],[255,220,200]],
-      // 4: Femininomenon — electric blue, magenta, cyber
-      [[0,5,14],[0,40,80],[0,212,255],[0,229,255],[255,0,170],[200,240,255]],
-      // 5: Naked in Manhattan — warm amber, champagne, salmon
-      [[14,10,0],[100,60,0],[232,163,23],[240,199,94],[255,140,105],[255,252,240]],
-    ];
 
     function getColor(t, palIdx) {
       const pal = PALETTES[palIdx % PALETTES.length];
@@ -1662,15 +1840,17 @@
 
     // ============================================
     // QUOTE SYSTEM
-    // Inspirational themes/sentiments inspired by
-    // Chappell Roan's music. These are paraphrased
-    // themes, NOT direct lyrics (copyright).
+    // Inspirational themes/sentiments — per artist.
     // Users can add their own favorites via the
-    // Edit modal — those persist in localStorage.
+    // Edit modal — those persist in localStorage
+    // (separate key per artist).
     // ============================================
 
-    // Default quotes: thematic sentiments from her music
-    const DEFAULT_QUOTES = [
+    // Default quotes per artist are stored in the ARTISTS config
+    // and the active set is in DEFAULT_QUOTES (swapped by switchArtist)
+
+    // --- Add default quotes to artist configs ---
+    ARTISTS.chappell.defaultQuotes = [
       { text: "You deserve a love that feels like dancing under neon lights", source: "on finding joy" },
       { text: "Set your boundaries like they're made of glitter and steel", source: "on self-worth" },
       { text: "The midwest made you, but it doesn't get to keep you small", source: "on growing" },
@@ -1685,19 +1865,34 @@
       { text: "The right people won't ask you to dim your sparkle", source: "on chosen family" },
     ];
 
+    ARTISTS.sabrina.defaultQuotes = [
+      { text: "That's that me espresso — know your worth and let them come to you", source: "on confidence" },
+      { text: "Short and sweet doesn't mean forgettable — it means unforgettable", source: "on impact" },
+      { text: "The best revenge is becoming exactly who they said you couldn't be", source: "on growth" },
+      { text: "You're allowed to outgrow the version of yourself they fell in love with", source: "on evolution" },
+      { text: "Be the kind of woman who makes the whole room rethink their choices", source: "on self-assurance" },
+      { text: "Nonsense is underrated — sometimes joy doesn't need to make sense", source: "on living freely" },
+      { text: "You can be soft and still be the most powerful person in the room", source: "on duality" },
+      { text: "Some chapters end so better ones can begin", source: "on moving on" },
+      { text: "The things that make you different are the things that make you shine", source: "on being yourself" },
+      { text: "Please, please, please — never settle for less than butterflies", source: "on love" },
+      { text: "Your taste in who deserves you should be impeccable", source: "on standards" },
+      { text: "Light as a feather, strong as a storm", source: "on resilience" },
+    ];
+
+    let DEFAULT_QUOTES = ARTISTS.chappell.defaultQuotes;
+
     // Load custom quotes from localStorage, fall back to defaults
-    // Why: localStorage lets your wife's custom quotes survive
-    // page refreshes and browser restarts
+    // Uses artist-specific keys so each artist has separate custom quotes
     function loadQuotes() {
       try {
-        const saved = localStorage.getItem('pinkPonyQuotes');
+        const key = 'quotes_' + activeArtist;
+        const saved = localStorage.getItem(key);
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Validate structure: must be array of {text, source}
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
       } catch (e) {
-        // localStorage might be unavailable (private browsing, etc.)
         console.warn('Could not load saved quotes:', e);
       }
       return [...DEFAULT_QUOTES];
@@ -1705,7 +1900,8 @@
 
     function saveQuotes(quotes) {
       try {
-        localStorage.setItem('pinkPonyQuotes', JSON.stringify(quotes));
+        const key = 'quotes_' + activeArtist;
+        localStorage.setItem(key, JSON.stringify(quotes));
       } catch (e) {
         console.warn('Could not save quotes:', e);
       }
@@ -1844,56 +2040,26 @@
     // contrast: multiplier (1.0 = unchanged)
     // warmth: shifts color temperature (positive = warm, negative = cool)
     // vignette: strength of edge darkening (0 = none, 1 = strong)
-    const CAMERA_FILTERS = [
-      {
-        name: 'Pink Pony Club',
-        tint: [1.15, 0.9, 1.0],     // Push red/pink, pull green
-        saturation: 1.4,
-        contrast: 1.1,
-        warmth: 15,                   // Warm pink cast
-        vignette: 0.3,
-      },
-      {
-        name: 'Red Wine Supernova',
-        tint: [1.25, 0.85, 0.8],    // Deep red/amber push
-        saturation: 1.3,
-        contrast: 1.25,              // High contrast drama
-        warmth: 25,                   // Very warm
-        vignette: 0.45,              // Strong vignette
-      },
-      {
-        name: 'Midwest Princess',
-        tint: [1.05, 0.95, 1.1],    // Soft lavender wash
-        saturation: 0.85,            // Slightly desaturated = dreamy
-        contrast: 0.95,
-        warmth: -5,                   // Cool pastel
-        vignette: 0.2,
-      },
-      {
-        name: 'Good Luck, Babe!',
-        tint: [1.2, 0.95, 0.9],     // Sunset coral
-        saturation: 1.3,
-        contrast: 1.1,
-        warmth: 20,                   // Golden hour
-        vignette: 0.25,
-      },
-      {
-        name: 'Femininomenon',
-        tint: [0.85, 1.05, 1.2],    // Cool cyan push
-        saturation: 1.45,            // Electric saturation
-        contrast: 1.2,
-        warmth: -20,                  // Cool/cyber
-        vignette: 0.35,
-      },
-      {
-        name: 'Naked in Manhattan',
-        tint: [1.2, 1.05, 0.85],    // Champagne gold
-        saturation: 1.15,
-        contrast: 1.05,
-        warmth: 30,                   // Very warm amber
-        vignette: 0.2,
-      },
+    // Camera filters per artist — stored in ARTISTS config
+    ARTISTS.chappell.cameraFilters = [
+      { name: 'Pink Pony Club', tint: [1.15, 0.9, 1.0], saturation: 1.4, contrast: 1.1, warmth: 15, vignette: 0.3 },
+      { name: 'Red Wine Supernova', tint: [1.25, 0.85, 0.8], saturation: 1.3, contrast: 1.25, warmth: 25, vignette: 0.45 },
+      { name: 'Midwest Princess', tint: [1.05, 0.95, 1.1], saturation: 0.85, contrast: 0.95, warmth: -5, vignette: 0.2 },
+      { name: 'Good Luck, Babe!', tint: [1.2, 0.95, 0.9], saturation: 1.3, contrast: 1.1, warmth: 20, vignette: 0.25 },
+      { name: 'Femininomenon', tint: [0.85, 1.05, 1.2], saturation: 1.45, contrast: 1.2, warmth: -20, vignette: 0.35 },
+      { name: 'Naked in Manhattan', tint: [1.2, 1.05, 0.85], saturation: 1.15, contrast: 1.05, warmth: 30, vignette: 0.2 },
     ];
+
+    ARTISTS.sabrina.cameraFilters = [
+      { name: 'Espresso', tint: [1.2, 1.0, 0.85], saturation: 1.15, contrast: 1.15, warmth: 25, vignette: 0.3 },
+      { name: 'Please Please Please', tint: [1.12, 0.95, 0.98], saturation: 1.1, contrast: 1.0, warmth: 12, vignette: 0.2 },
+      { name: 'Taste', tint: [1.2, 0.85, 0.85], saturation: 1.35, contrast: 1.3, warmth: 10, vignette: 0.45 },
+      { name: 'Nonsense', tint: [1.0, 0.92, 1.15], saturation: 1.4, contrast: 1.1, warmth: -8, vignette: 0.25 },
+      { name: 'Feather', tint: [0.9, 1.05, 1.15], saturation: 0.9, contrast: 0.95, warmth: -10, vignette: 0.15 },
+      { name: 'Short n\' Sweet', tint: [1.15, 1.05, 0.9], saturation: 1.2, contrast: 1.05, warmth: 20, vignette: 0.2 },
+    ];
+
+    let CAMERA_FILTERS = ARTISTS.chappell.cameraFilters;
 
     async function openCamera() {
       try {
@@ -2552,7 +2718,7 @@
     //   ✨ Superfan       — deep cuts for real ones
     // ============================================
 
-    const TRIVIA_QUESTIONS = [
+    let TRIVIA_QUESTIONS = [
       // ---- NAME THAT SONG ----
       {
         category: '🎵 name that song',
@@ -2901,13 +3067,87 @@
     ];
 
     // Result messages based on score — themed for the Midwest Princess
-    const TRIVIA_RESULTS = [
+    let TRIVIA_RESULTS = [
       { min: 0,  max: 3,  msg: 'Just getting started — time to stream the discography on repeat!' },
       { min: 4,  max: 5,  msg: 'Casual fan energy... but we see you warming up!' },
       { min: 6,  max: 7,  msg: 'Solid knowledge! You\'re definitely on the rise.' },
       { min: 8,  max: 8,  msg: 'Impressive! You\'re a true Midwest Princess.' },
       { min: 9,  max: 9,  msg: 'Superfan status! Chappell would be proud.' },
       { min: 10, max: 10, msg: 'PERFECT SCORE! You ARE the Midwest Princess! 👑' },
+    ];
+
+    // Store Chappell's trivia in the artist config
+    ARTISTS.chappell.triviaQuestions = TRIVIA_QUESTIONS;
+    ARTISTS.chappell.triviaResults = TRIVIA_RESULTS;
+
+    // Sabrina Carpenter trivia bank
+    ARTISTS.sabrina.triviaQuestions = [
+      // ---- NAME THAT SONG ----
+      { category: '🎵 name that song', question: 'Which song describes the addictive, can\'t-get-enough feeling of a new crush — comparing the effect to a caffeinated drink?', answers: ['Espresso', 'Nonsense', 'Feather', 'Fast Times'], correct: 0, feedback: 'Released ahead of Coachella 2024, it became a worldwide #1 smash hit.' },
+      { category: '🎵 name that song', question: 'Which track is a desperate, pleading anthem about hoping your new partner won\'t embarrass you in public?', answers: ['Taste', 'Please Please Please', 'Slim Pickins', 'Bed Chem'], correct: 1, feedback: 'Her first US #1 on the Hot 100 — spent weeks in the top ten.' },
+      { category: '🎵 name that song', question: 'Which song uses playful humor to deal with a love triangle, where she acknowledges the other woman but stands her ground?', answers: ['Taste', 'Lie to Girls', 'Because I Liked a Boy', 'Dumb & Poetic'], correct: 0, feedback: 'The music video became an instant sensation with its comedic horror-film style.' },
+      { category: '🎵 name that song', question: 'Which track is famous for its improvised, hilariously suggestive outros that change at every live show?', answers: ['Feather', 'Nonsense', 'Fast Times', 'Espresso'], correct: 1, feedback: 'The ever-changing outros became a beloved live tradition — fans collect different versions.' },
+      { category: '🎵 name that song', question: 'Which upbeat song is about finally feeling free and unbothered after leaving a bad relationship?', answers: ['Feather', 'Skinny Dipping', 'Vicious', 'Because I Liked a Boy'], correct: 0, feedback: 'Reached #1 on US Pop Airplay and peaked at #21 on the Hot 100.' },
+      { category: '🎵 name that song', question: 'Which song addresses a public feud situation where she felt caught in drama just for being romantically involved with someone?', answers: ['Skin', 'Because I Liked a Boy', 'Lie to Girls', 'Nonsense'], correct: 1, feedback: 'She explored the frustration of being defined by someone else\'s narrative.' },
+      { category: '🎵 name that song', question: 'Which song explores the instant physical and emotional chemistry of a first night with someone new?', answers: ['Bed Chem', 'Espresso', 'Slim Pickins', 'Sharpest Tool'], correct: 0, feedback: 'A fan-favorite from Short n\' Sweet with its playful, intimate storytelling.' },
+      { category: '🎵 name that song', question: 'Which track\'s title was also a controversy-sparking response to another artist\'s song during a public feud?', answers: ['Because I Liked a Boy', 'Skin', 'Feather', 'Vicious'], correct: 1, feedback: 'Her first release on Island Records and first entry on the Billboard Hot 100 at #48.' },
+      { category: '🎵 name that song', question: 'Which song from Short n\' Sweet humorously laments that the dating pool is terrible?', answers: ['Dumb & Poetic', 'Slim Pickins', 'Coincidence', 'Lie to Girls'], correct: 1, feedback: 'A witty take on modern dating frustrations wrapped in a catchy melody.' },
+      { category: '🎵 name that song', question: 'Which 2025 single debuted at #1 on the Billboard Hot 100, from her album Man\'s Best Friend?', answers: ['Tears', 'Manchild', 'The Giver', 'Dumb & Poetic'], correct: 1, feedback: 'Her second US #1, "Manchild" debuted atop the Hot 100 from her seventh studio album.' },
+
+      // ---- CAREER & LIFE ----
+      { category: '🎤 career & life', question: 'What is Sabrina Carpenter\'s full birth name?', answers: ['Sabrina Ann Carpenter', 'Sabrina Annlynn Carpenter', 'Sabrina Rose Carpenter', 'Sabrina Lynn Carpenter'], correct: 1, feedback: 'Born Sabrina Annlynn Carpenter on May 11, 1999, in Quakertown, Pennsylvania.' },
+      { category: '🎤 career & life', question: 'Which Disney Channel show made Sabrina Carpenter famous as a teenager?', answers: ['Liv and Maddie', 'Austin & Ally', 'Girl Meets World', 'Bunk\'d'], correct: 2, feedback: 'She starred as Maya Hart from 2014-2017 on this Boy Meets World spinoff.' },
+      { category: '🎤 career & life', question: 'What was Sabrina Carpenter\'s first on-screen acting role?', answers: ['Girl Meets World', 'Austin & Ally', 'Law & Order: SVU', 'Adventures in Babysitting'], correct: 2, feedback: 'She appeared in a 2011 episode of SVU at age 11 — quite a heavy role for a debut!' },
+      { category: '🎤 career & life', question: 'Which record label did Sabrina first sign with as a young artist?', answers: ['Island Records', 'Atlantic Records', 'Hollywood Records', 'Columbia Records'], correct: 2, feedback: 'Hollywood Records is Disney\'s music label — she released four albums with them.' },
+      { category: '🎤 career & life', question: 'Where was Sabrina Carpenter born?', answers: ['Los Angeles, California', 'Nashville, Tennessee', 'Quakertown, Pennsylvania', 'New York City, New York'], correct: 2, feedback: 'A small town in Pennsylvania — she later moved to LA at age 13 to pursue acting.' },
+      { category: '🎤 career & life', question: 'Which famous animated character is voiced by Sabrina\'s aunt, Nancy Cartwright?', answers: ['Lisa Simpson', 'Bart Simpson', 'Dora the Explorer', 'Kim Possible'], correct: 1, feedback: 'Her paternal aunt Nancy Cartwright has voiced Bart Simpson since 1989!' },
+      { category: '🎤 career & life', question: 'Which major artist\'s tour did Sabrina open for in 2023-2024, helping launch her career?', answers: ['Billie Eilish', 'Olivia Rodrigo', 'Taylor Swift', 'Ariana Grande'], correct: 2, feedback: 'She opened 25 shows on the Eras Tour across South America, Australia, and Asia.' },
+      { category: '🎤 career & life', question: 'How many Grammy Awards did Short n\' Sweet win at the 2025 ceremony?', answers: ['One', 'Two', 'Three', 'None — only nominated'], correct: 1, feedback: 'Best Pop Vocal Album and Best Pop Solo Performance for "Espresso."' },
+      { category: '🎤 career & life', question: 'At what age did Sabrina enter a singing competition called "The Next Miley Cyrus Project"?', answers: ['8', '10', '12', '14'], correct: 1, feedback: 'She placed third in the nationwide competition at just 10 years old.' },
+      { category: '🎤 career & life', question: 'Which prestigious magazine list was Sabrina Carpenter selected for?', answers: ['Time 100', 'Forbes 30 Under 30', 'People\'s Most Beautiful', 'Vogue 25'], correct: 1, feedback: 'She was selected for Forbes\' 30 Under 30 list recognizing her career achievements.' },
+
+      // ---- ALBUM KNOWLEDGE ----
+      { category: '💿 album knowledge', question: 'What is the title of Sabrina Carpenter\'s sixth studio album?', answers: ['Emails I Can\'t Send', 'Short n\' Sweet', 'Man\'s Best Friend', 'Singular: Act I'], correct: 1, feedback: 'Released August 23, 2024 — debuted at #1 on the Billboard 200 with 362,000 units.' },
+      { category: '💿 album knowledge', question: 'What was Sabrina\'s first studio album called?', answers: ['Evolution', 'Can\'t Blame a Girl', 'Eyes Wide Open', 'School Nights'], correct: 2, feedback: 'Released in 2015 through Hollywood Records while she was still on Girl Meets World.' },
+      { category: '💿 album knowledge', question: 'Which album did Sabrina call her first "big girl" album with full creative control?', answers: ['Evolution', 'Short n\' Sweet', 'Emails I Can\'t Send', 'Man\'s Best Friend'], correct: 2, feedback: 'Her 2022 album with Island Records marked her artistic rebirth with full creative freedom.' },
+      { category: '💿 album knowledge', question: 'How many studio albums has Sabrina Carpenter released as of 2025?', answers: ['Five', 'Six', 'Seven', 'Eight'], correct: 2, feedback: 'Seven albums: Eyes Wide Open, Evolution, Singular Act I & II, Emails I Can\'t Send, Short n\' Sweet, and Man\'s Best Friend.' },
+      { category: '💿 album knowledge', question: 'What is the title of the album\'s reference — why is it called "Short n\' Sweet"?', answers: ['It\'s only 30 minutes long', 'Her shortest relationships impacted her the most', 'She\'s 5\'0" tall', 'It was a nickname from Taylor Swift'], correct: 1, feedback: 'It references how her shortest romantic relationships had the deepest emotional impact — plus a nod to her petite stature.' },
+      { category: '💿 album knowledge', question: 'Which producer, known for working with Taylor Swift, also produced tracks on Short n\' Sweet?', answers: ['Max Martin', 'Dan Nigro', 'Jack Antonoff', 'Pharrell Williams'], correct: 2, feedback: 'Jack Antonoff, one of pop\'s most prolific producers, contributed to the album.' },
+      { category: '💿 album knowledge', question: 'What was the name of Sabrina\'s 2023 Christmas EP?', answers: ['Holly Jolly', 'A Very Sabrina Christmas', 'Fruitcake', 'Jingle Bells'], correct: 2, feedback: 'Fruitcake reached #3 on the US Top Holiday Albums chart.' },
+      { category: '💿 album knowledge', question: 'Which Sabrina Carpenter single made music history by being one of the first three top-five hits by a female artist in the same week?', answers: ['Espresso', 'Please Please Please', 'Taste', 'All three simultaneously'], correct: 3, feedback: 'She became the first act since The Beatles to chart their first three top-five hits simultaneously.' },
+      { category: '💿 album knowledge', question: 'What is the title of Sabrina\'s 2025 seventh studio album?', answers: ['Short n\' Sweet Vol. 2', 'Man\'s Best Friend', 'Hollywood Nights', 'Emails I Can\'t Send Deluxe'], correct: 1, feedback: 'Man\'s Best Friend topped the Billboard 200 and spawned the #1 single "Manchild."' },
+      { category: '💿 album knowledge', question: 'Which label does Sabrina currently release music through?', answers: ['Hollywood Records', 'Atlantic Records', 'Island Records', 'Columbia Records'], correct: 2, feedback: 'She joined Island Records in 2021, marking her creative independence from Disney.' },
+
+      // ---- TOURS & SHOWS ----
+      { category: '🎪 tours & shows', question: 'At which 2024 music festival did Sabrina debut "Espresso" live before it was officially promoted?', answers: ['Glastonbury', 'Lollapalooza', 'Coachella', 'Gov Ball'], correct: 2, feedback: 'She trusted her instinct over her label\'s advice and debuted it at Coachella — it went viral.' },
+      { category: '🎪 tours & shows', question: 'What was Sabrina\'s reaction when her label wanted "Please Please Please" as the lead single instead of "Espresso"?', answers: ['She agreed immediately', 'She refused and chose Espresso', 'She released both at once', 'She let fans vote'], correct: 1, feedback: 'She said she was "afraid of disappointing people for five minutes" then stuck with her gut.' },
+      { category: '🎪 tours & shows', question: 'On Taylor Swift\'s Eras Tour, which legs did Sabrina open?', answers: ['North America only', 'Europe and UK', 'South America, Australia, and Asia', 'The entire world tour'], correct: 2, feedback: 'She opened from August 2023 to March 2024 on the international legs of the tour.' },
+      { category: '🎪 tours & shows', question: 'What\'s the name of the charitable fund created with PLUS1 on Sabrina\'s tour?', answers: ['The Carpenter Foundation', 'Short n\' Sweet Fund', 'Sabrina Carpenter Fund', 'Espresso Foundation'], correct: 2, feedback: '$1 from every ticket — it reached $1 million faster than any other PLUS1 artist partnership.' },
+      { category: '🎪 tours & shows', question: 'Which artist did Sabrina open for on the 2017 Dangerous Woman Tour?', answers: ['Taylor Swift', 'Ariana Grande', 'Beyoncé', 'Lady Gaga'], correct: 1, feedback: 'Opening for Ariana Grande was one of her earliest big touring opportunities.' },
+      { category: '🎪 tours & shows', question: 'Sabrina\'s stage persona and style have been described as inspired by which era?', answers: ['1980s neon', '1950s and 60s vintage Hollywood', '1970s disco', '2000s Y2K'], correct: 1, feedback: 'Her hyper-feminine aesthetic features vintage silhouettes, curtain bangs, and sparkly fabrics.' },
+      { category: '🎪 tours & shows', question: 'What special collaboration happened when Sabrina returned to the Eras Tour in New Orleans?', answers: ['She performed a new unreleased song', 'She and Taylor did a mashup of Espresso and Is It Over Now', 'She joined for the entire setlist', 'She brought out a surprise third guest'], correct: 1, feedback: 'Taylor called Sabrina "live" on stage, then they performed a three-song mashup together.' },
+      { category: '🎪 tours & shows', question: 'What espresso-flavored product did Sabrina collaborate on, with half the proceeds going to charity?', answers: ['Coffee beans', 'Ice cream with Van Leeuwen', 'Energy drinks', 'Chocolate bars'], correct: 1, feedback: 'Half the earnings went to the Ali Forney Center, supporting LGBTQ+ youth.' },
+
+      // ---- SUPERFAN ----
+      { category: '✨ superfan', question: 'How many instruments can Sabrina play?', answers: ['Two', 'Three', 'Five', 'She doesn\'t play any'], correct: 2, feedback: 'Piano, bass, ukulele, guitar, and drums — she played guitar on the Short n\' Sweet Tour.' },
+      { category: '✨ superfan', question: 'How tall is Sabrina Carpenter?', answers: ['5\'0"', '5\'1"', '5\'3"', '5\'5"'], correct: 0, feedback: 'Five feet even — her petite stature is part of the "Short n\' Sweet" double meaning.' },
+      { category: '✨ superfan', question: 'How many siblings does Sabrina have?', answers: ['One younger brother', 'Two older sisters', 'Three older sisters', 'She\'s an only child'], correct: 2, feedback: 'She has three older sisters and was homeschooled growing up.' },
+      { category: '✨ superfan', question: 'What did Sabrina tell Vogue about her decision to debut "Espresso" at Coachella against her label\'s wishes?', answers: ['"I was afraid for five minutes, then said no"', '"I didn\'t even think about it"', '"My manager convinced me"', '"Taylor Swift told me to do it"'], correct: 0, feedback: 'She trusted her gut about the song\'s live energy, knowing audiences would feel it immediately.' },
+      { category: '✨ superfan', question: 'What charity did Sabrina become an ambassador for in 2016, visiting children\'s hospitals?', answers: ['Make-A-Wish', 'St. Jude', 'Ryan Seacrest Foundation', 'UNICEF'], correct: 2, feedback: 'She visited various children\'s hospitals on behalf of the Ryan Seacrest Foundation.' },
+      { category: '✨ superfan', question: 'What streaming record did "Espresso," "Please Please Please," and "Taste" set together?', answers: ['First to hit 1 billion streams each', 'Three top-five hits in the same week — first since The Beatles', 'Most streamed songs in a single day', 'Longest consecutive weeks in the top 10'], correct: 1, feedback: 'She became the first act since The Beatles to chart their first three top-five hits in the same week.' },
+      { category: '✨ superfan', question: 'In which competition did a 10-year-old Sabrina place third?', answers: ['American Idol Junior', 'The Voice Kids', 'The Next Miley Cyrus Project', 'Disney\'s Star Search'], correct: 2, feedback: 'The nationwide singing competition that helped kickstart her performance career.' },
+      { category: '✨ superfan', question: 'What did Taylor Swift say about Sabrina after her Eras Tour stint?', answers: ['"She\'s the next me"', '"Her career has skyrocketed — it\'s the dream scenario"', '"She\'s my little sister"', '"She taught me new dance moves"'], correct: 1, feedback: 'Swift praised how Sabrina\'s career exploded after the tour, calling it the ideal trajectory.' },
+      { category: '✨ superfan', question: 'How was Sabrina Carpenter educated as a child?', answers: ['Public school in Pennsylvania', 'Private school in LA', 'Homeschooled', 'Boarding school in New York'], correct: 2, feedback: 'Homeschooling allowed her to balance a self-paced curriculum with acting and music.' },
+      { category: '✨ superfan', question: 'What record did Short n\' Sweet set for Sabrina on the Billboard 200?', answers: ['Longest #1 streak ever', 'Her first #1 and three consecutive weeks at the top', 'Most debut-week sales for a female artist', 'First to chart every song in the top 50'], correct: 1, feedback: 'Three weeks at #1 — the second-longest running #1 album of 2024, behind only Taylor\'s Tortured Poets Department.' },
+    ];
+
+    ARTISTS.sabrina.triviaResults = [
+      { min: 0,  max: 3,  msg: 'Time for a Short n\' Sweet deep dive! Stream the albums!' },
+      { min: 4,  max: 5,  msg: 'You know the hits — now dig into the deep cuts!' },
+      { min: 6,  max: 7,  msg: 'Solid! You clearly know your Carpenter catalog.' },
+      { min: 8,  max: 8,  msg: 'Impressive! That\'s that you espresso — can\'t stop, won\'t stop.' },
+      { min: 9,  max: 9,  msg: 'Superfan energy! Sabrina would be proud.' },
+      { min: 10, max: 10, msg: 'PERFECT SCORE! You are Short n\' Sweet personified! ☕👑' },
     ];
 
     // Trivia game state
@@ -3252,6 +3492,26 @@
     // ============================================
     // EVENT LISTENERS
     // ============================================
+
+    // Artist picker on start screen
+    const pickChappell = document.getElementById('pickChappell');
+    const pickSabrina = document.getElementById('pickSabrina');
+
+    pickChappell.addEventListener('click', () => {
+      pickChappell.classList.add('selected');
+      pickSabrina.classList.remove('selected');
+      switchArtist('chappell');
+      document.getElementById('startTitle').innerHTML = ARTISTS.chappell.title;
+      document.getElementById('startSubtitle').textContent = ARTISTS.chappell.subtitle;
+    });
+
+    pickSabrina.addEventListener('click', () => {
+      pickSabrina.classList.add('selected');
+      pickChappell.classList.remove('selected');
+      switchArtist('sabrina');
+      document.getElementById('startTitle').innerHTML = ARTISTS.sabrina.title;
+      document.getElementById('startSubtitle').textContent = ARTISTS.sabrina.subtitle;
+    });
 
     // Start
     document.getElementById('startBtn').addEventListener('click', async () => {
