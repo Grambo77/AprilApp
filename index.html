@@ -745,9 +745,14 @@
     }
 
     #cameraCanvas {
+      /* Canvas fills the entire camera layer.
+         We handle aspect ratio in JS by scaling
+         the drawImage call to cover the canvas,
+         since object-fit doesn't work on canvas. */
+      position: absolute;
+      top: 0; left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
     }
 
     /* Camera-specific bottom controls */
@@ -1621,9 +1626,13 @@
           }
         });
 
-        // Now we know frames are flowing — size the canvas to match
-        cameraCanvas.width = cameraVideo.videoWidth;
-        cameraCanvas.height = cameraVideo.videoHeight;
+        // Size canvas smaller than screen for performance.
+        // Processing every pixel per frame is expensive —
+        // 60% res keeps filters smooth while running well on mobile.
+        // CSS scales it up smoothly (same trick as the fractal canvas).
+        const CAM_SCALE = 0.6;
+        cameraCanvas.width = Math.floor(window.innerWidth * CAM_SCALE);
+        cameraCanvas.height = Math.floor(window.innerHeight * CAM_SCALE);
 
         // Show camera UI, hide fractal UI
         state.cameraActive = true;
@@ -1712,8 +1721,33 @@
         return;
       }
 
-      // Draw current video frame to canvas
-      cameraCtx.drawImage(cameraVideo, 0, 0, w, h);
+      // Draw current video frame to canvas using "cover" fit.
+      // This scales the video to fill the entire canvas,
+      // cropping the excess rather than letterboxing.
+      // Same logic as CSS object-fit:cover but done manually
+      // because canvas doesn't support that CSS property.
+      const vw = cameraVideo.videoWidth;
+      const vh = cameraVideo.videoHeight;
+      const canvasAspect = w / h;
+      const videoAspect = vw / vh;
+
+      let sx, sy, sw, sh;
+      if (videoAspect > canvasAspect) {
+        // Video is wider than canvas — crop sides
+        sh = vh;
+        sw = vh * canvasAspect;
+        sx = (vw - sw) / 2;
+        sy = 0;
+      } else {
+        // Video is taller than canvas — crop top/bottom
+        sw = vw;
+        sh = vw / canvasAspect;
+        sx = 0;
+        sy = (vh - sh) / 2;
+      }
+
+      // drawImage(source, sourceX, sourceY, sourceW, sourceH, destX, destY, destW, destH)
+      cameraCtx.drawImage(cameraVideo, sx, sy, sw, sh, 0, 0, w, h);
 
       // Get pixel data for manipulation
       const imageData = cameraCtx.getImageData(0, 0, w, h);
