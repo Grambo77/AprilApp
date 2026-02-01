@@ -81,6 +81,48 @@
       --gradient-deep: #10002b;
     }
 
+    body.theme-goodluck {
+      /* Good Luck, Babe! — teal, coral, sunset warmth */
+      --primary: #ff6b6b;
+      --primary-glow: rgba(255, 107, 107, 0.4);
+      --accent: #ffa07a;
+      --accent-soft: #ffd4c4;
+      --highlight: #20b2aa;
+      --surface: rgba(255, 107, 107, 0.12);
+      --surface-border: rgba(255, 107, 107, 0.4);
+      --text-primary: #fff5f0;
+      --text-muted: rgba(255, 160, 122, 0.5);
+      --gradient-deep: #1a0a0a;
+    }
+
+    body.theme-femininomenon {
+      /* Femininomenon — electric blue, magenta, cyber */
+      --primary: #00d4ff;
+      --primary-glow: rgba(0, 212, 255, 0.4);
+      --accent: #00e5ff;
+      --accent-soft: #b0f0ff;
+      --highlight: #ff00aa;
+      --surface: rgba(0, 212, 255, 0.12);
+      --surface-border: rgba(0, 212, 255, 0.4);
+      --text-primary: #f0fcff;
+      --text-muted: rgba(0, 229, 255, 0.5);
+      --gradient-deep: #000a14;
+    }
+
+    body.theme-naked {
+      /* Naked in Manhattan — warm amber, champagne, gold */
+      --primary: #e8a317;
+      --primary-glow: rgba(232, 163, 23, 0.4);
+      --accent: #f0c75e;
+      --accent-soft: #ffe4a0;
+      --highlight: #ff8c69;
+      --surface: rgba(232, 163, 23, 0.12);
+      --surface-border: rgba(232, 163, 23, 0.4);
+      --text-primary: #fffcf0;
+      --text-muted: rgba(240, 199, 94, 0.5);
+      --gradient-deep: #140e00;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -110,8 +152,9 @@
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 1;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
+      /* Smooth bilinear upscale gives a dreamy soft-glow
+         feel instead of harsh pixel edges */
+      image-rendering: auto;
     }
 
     /* ============================================
@@ -774,9 +817,9 @@
       quoteTimer: null,
     };
 
-    const FRACTAL_TYPES = ['Julia Set', 'Mandelbrot', 'Burning Ship'];
-    const THEME_NAMES = ['Pink Pony Club', 'Red Wine Supernova', 'Midwest Princess'];
-    const THEME_CLASSES = ['', 'theme-redwine', 'theme-midwest'];
+    const FRACTAL_TYPES = ['Julia Set', 'Mandelbrot', 'Burning Ship', 'Kaleidoscope'];
+    const THEME_NAMES = ['Pink Pony Club', 'Red Wine Supernova', 'Midwest Princess', 'Good Luck, Babe!', 'Femininomenon', 'Naked in Manhattan'];
+    const THEME_CLASSES = ['', 'theme-redwine', 'theme-midwest', 'theme-goodluck', 'theme-femininomenon', 'theme-naked'];
 
     // ============================================
     // FRACTAL CANVAS — low-res for performance
@@ -784,7 +827,7 @@
     const canvas = document.getElementById('fractalCanvas');
     const ctx = canvas.getContext('2d');
     let imgData, pixels;
-    const RENDER_SCALE = 0.25;
+    const RENDER_SCALE = 0.4; // 40% of screen res — balance of smooth visuals + mobile performance
 
     function resizeCanvas() {
       canvas.width = Math.floor(window.innerWidth * RENDER_SCALE);
@@ -868,12 +911,18 @@
     // COLOR PALETTES — matches the 3 CSS themes
     // ============================================
     const PALETTES = [
-      // Pink Pony Club
+      // 0: Pink Pony Club — hot pinks, neon, gold
       [[10,0,7],[139,0,53],[255,45,107],[255,105,180],[255,215,0],[255,240,245]],
-      // Red Wine Supernova
+      // 1: Red Wine Supernova — crimsons, amber, cream
       [[10,0,3],[100,0,15],[220,20,60],[255,99,71],[255,193,7],[255,255,220]],
-      // Midwest Princess
+      // 2: Midwest Princess — purple, lavender, mint
       [[16,0,43],[80,20,120],[199,125,255],[224,170,255],[128,255,219],[248,240,255]],
+      // 3: Good Luck, Babe! — teal, coral, sunset
+      [[10,5,5],[32,100,100],[255,107,107],[255,160,122],[32,178,170],[255,220,200]],
+      // 4: Femininomenon — electric blue, magenta, cyber
+      [[0,5,14],[0,40,80],[0,212,255],[0,229,255],[255,0,170],[200,240,255]],
+      // 5: Naked in Manhattan — warm amber, champagne, salmon
+      [[14,10,0],[100,60,0],[232,163,23],[240,199,94],[255,140,105],[255,252,240]],
     ];
 
     function getColor(t, palIdx) {
@@ -926,6 +975,35 @@
       return 0;
     }
 
+    // Kaleidoscope: mirrors the complex plane into
+    // repeating wedge segments (like a real kaleidoscope),
+    // then runs a Julia set on the folded coordinates.
+    // The "segments" parameter controls how many mirror
+    // slices — audio modulates this for trippy shifts.
+    function kaleidoscope(real, imag, cr, ci, maxIter, segments, rotation) {
+      // Convert cartesian to polar coordinates
+      // atan2 gives the angle, hypot gives the distance from center
+      let angle = Math.atan2(imag, real) + rotation;
+      let radius = Math.hypot(real, imag);
+
+      // Fold the full circle into repeating wedge segments
+      // This is the core kaleidoscope trick:
+      // 1. Divide the circle into N segments
+      // 2. Use modulo to wrap angle into one segment
+      // 3. Mirror alternate segments by reflecting the angle
+      const segAngle = (Math.PI * 2) / segments;
+      angle = ((angle % segAngle) + segAngle) % segAngle; // Wrap to one segment
+      if (angle > segAngle / 2) angle = segAngle - angle; // Mirror fold
+
+      // Convert back to cartesian with the folded angle
+      const zr = radius * Math.cos(angle);
+      const zi = radius * Math.sin(angle);
+
+      // Run Julia set on the folded coordinates
+      // This gives us fractal detail inside the kaleidoscope pattern
+      return juliaSet(zr, zi, cr, ci, maxIter);
+    }
+
     // ============================================
     // RENDER LOOP — runs every frame
     // ============================================
@@ -972,6 +1050,13 @@
             case 0: val = juliaSet(real, imag, cr, ci, maxIter); break;
             case 1: val = mandelbrot(real, imag, maxIter); break;
             case 2: val = burningShip(real, imag + 0.5, maxIter); break;
+            case 3:
+              // Kaleidoscope: bass controls segment count (6-12 slices),
+              // time + treble drives rotation speed for that spinning effect
+              const segments = Math.floor(6 + bass * 6);
+              const rotation = state.time * 0.4 + treble * 2;
+              val = kaleidoscope(real, imag, cr, ci, maxIter, segments, rotation);
+              break;
           }
 
           const colorShift = audio * 0.3;
