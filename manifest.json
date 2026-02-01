@@ -1,7 +1,7 @@
 {
-  "name": "Pink Pony Fractals",
-  "short_name": "PonyFractals",
-  "description": "A mic-reactive fractal visualizer inspired by Chappell Roan",
+  "name": "Fractals for April ✦",
+  "short_name": "Fractals✦",
+  "description": "A mic-reactive fractal visualizer — for April, with love",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "any",

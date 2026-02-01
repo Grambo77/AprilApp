@@ -584,6 +584,32 @@
       line-height: 1.5;
     }
 
+    .start-dedication {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--accent-soft);
+      letter-spacing: 0.05em;
+      opacity: 0.8;
+      text-shadow: 0 0 15px var(--primary-glow);
+      margin-top: -4px;
+    }
+
+    /* ============================================
+       REDUCED MOTION — accessibility
+       Respects user's OS-level preference to reduce
+       animations. Disables glow pulses, sheen sweeps,
+       and transitions so the app is still usable for
+       people with motion sensitivity.
+    ============================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     /* ============================================
        QUOTE OVERLAY
        Centered text that fades in/out over the
@@ -1184,6 +1210,7 @@
       <button class="btn" id="pickSabrina" style="pointer-events:auto;padding:10px 20px;font-size:0.75rem;">✦ Sabrina Carpenter</button>
     </div>
     <button class="start-btn" id="startBtn">✦ Enter ✦</button>
+    <p class="start-dedication">for April — I love you ✦</p>
     <p class="start-note">Allow microphone access for the full audio-reactive experience</p>
   </div>
 
@@ -1318,6 +1345,7 @@
       <button class="btn" id="btnCamera"><span class="btn-icon">📷</span> Camera</button>
       <button class="btn" id="btnEditPhoto"><span class="btn-icon">🖼</span> Edit</button>
       <button class="btn" id="btnTrivia"><span class="btn-icon">?</span> Trivia</button>
+      <button class="btn" id="btnSwapArtist"><span class="btn-icon">♫</span> Artist</button>
       <button class="btn" id="btnFullscreen"><span class="btn-icon">⛶</span> Full</button>
     </div>
     <div class="slider-row">
@@ -3560,6 +3588,12 @@
     document.getElementById('triviaExit').addEventListener('click', closeTrivia);
     document.getElementById('triviaCloseBtn').addEventListener('click', closeTrivia);
 
+    // Artist swap — toggle between artists from inside the app
+    document.getElementById('btnSwapArtist').addEventListener('click', () => {
+      const next = activeArtist === 'chappell' ? 'sabrina' : 'chappell';
+      switchArtist(next);
+    });
+
     // Quote mode toggle
     document.getElementById('btnQuotes').addEventListener('click', toggleQuoteMode);
 
@@ -3594,7 +3628,13 @@
     });
 
     // Resize
-    window.addEventListener('resize', resizeCanvas);
+    // Debounce resize — avoids firing on every pixel of a drag.
+    // Waits 150ms after the last event before recalculating.
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resizeCanvas, 150);
+    });
     resizeCanvas();
 
     // ============================================
