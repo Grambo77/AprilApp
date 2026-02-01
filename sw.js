@@ -11,7 +11,7 @@
 // but still work offline if cached).
 // ============================================
 
-const CACHE_NAME = 'pink-pony-v8';
+const CACHE_NAME = 'pink-pony-v9';
 
 // Files that make up the "app shell" — everything
 // needed to render the app without network access

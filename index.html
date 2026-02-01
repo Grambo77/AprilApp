@@ -787,6 +787,15 @@
       letter-spacing: 0.2em;
     }
 
+    .camera-frame-name {
+      font-size: 0.6rem;
+      color: var(--highlight);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      min-height: 1em;
+      opacity: 0.7;
+    }
+
     .camera-btn-row {
       display: flex;
       gap: 12px;
@@ -895,8 +904,10 @@
   <div class="camera-flash" id="cameraFlash"></div>
   <div class="camera-controls" id="cameraControls">
     <div class="camera-filter-name" id="cameraFilterName">✦ Pink Pony Club ✦</div>
+    <div class="camera-frame-name" id="cameraFrameName"></div>
     <div class="camera-btn-row">
       <button class="btn" id="btnCamFilter"><span class="btn-icon">♦</span> Filter</button>
+      <button class="btn" id="btnCamFrame"><span class="btn-icon">❑</span> Frame</button>
       <button class="shutter-btn" id="btnShutter"></button>
       <button class="btn" id="btnCamFlip"><span class="btn-icon">⟳</span> Flip</button>
     </div>
@@ -959,6 +970,7 @@
       cameraStream: null,
       cameraAnimFrame: null,
       cameraFilterIndex: 0,
+      cameraFrameIndex: 0,   // 0 = no frame, 1+ = frame styles
       facingMode: 'user',  // 'user' = front, 'environment' = back
     };
 
@@ -1704,6 +1716,395 @@
     }
 
     // ============================================
+    // CAMERA FRAMES & VIGNETTES
+    // Decorative overlays drawn on top of the
+    // filtered camera feed. Each frame uses canvas
+    // 2D drawing for borders, corners, stars, and
+    // text — all in the Chappell Roan camp style.
+    //
+    // Index 0 = no frame, 1+ = frame styles
+    // ============================================
+    const CAMERA_FRAMES = [
+      { name: 'None' },
+      {
+        name: 'Neon Marquee',
+        // Double neon border with glowing corners — like a motel sign
+      },
+      {
+        name: 'Glitter Vignette',
+        // Heavy dark vignette with sparkle stars scattered around edges
+      },
+      {
+        name: 'Drag Pageant',
+        // Ornate corner flourishes + crown element at top center
+      },
+      {
+        name: 'Polaroid Dreamy',
+        // Thick white border on bottom (like a polaroid), soft top edges
+      },
+      {
+        name: 'Star Burst',
+        // Radiating star pattern from corners with light leak effect
+      },
+      {
+        name: 'County Fair',
+        // Scalloped carnival-ticket edge border with warm glow
+      },
+    ];
+
+    function cycleCameraFrame() {
+      state.cameraFrameIndex = (state.cameraFrameIndex + 1) % CAMERA_FRAMES.length;
+      const name = CAMERA_FRAMES[state.cameraFrameIndex].name;
+      document.getElementById('cameraFrameName').textContent =
+        state.cameraFrameIndex === 0 ? '' : '⬥ ' + name;
+    }
+
+    // Draw a 5-pointed star at (x, y) with given size
+    function drawStar(ctx, x, y, size, color, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const angle = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+        const innerAngle = angle + Math.PI / 5;
+        const outerR = size;
+        const innerR = size * 0.4;
+        if (i === 0) ctx.moveTo(x + outerR * Math.cos(angle), y + outerR * Math.sin(angle));
+        else ctx.lineTo(x + outerR * Math.cos(angle), y + outerR * Math.sin(angle));
+        ctx.lineTo(x + innerR * Math.cos(innerAngle), y + innerR * Math.sin(innerAngle));
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Draw a diamond/sparkle shape (4-pointed star)
+    function drawSparkle(ctx, x, y, size, color, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, y - size);
+      ctx.lineTo(x + size * 0.3, y);
+      ctx.lineTo(x, y + size);
+      ctx.lineTo(x - size * 0.3, y);
+      ctx.closePath();
+      ctx.fill();
+      // Cross sparkle (rotated)
+      ctx.beginPath();
+      ctx.moveTo(x - size, y);
+      ctx.lineTo(x, y + size * 0.3);
+      ctx.lineTo(x + size, y);
+      ctx.lineTo(x, y - size * 0.3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCameraFrame(ctx, w, h) {
+      const frameIdx = state.cameraFrameIndex;
+      if (frameIdx === 0) return; // No frame selected
+
+      // Read current theme colors for theme-aware frames
+      const style = getComputedStyle(document.body);
+      const primary = style.getPropertyValue('--primary').trim();
+      const accent = style.getPropertyValue('--accent').trim();
+      const highlight = style.getPropertyValue('--highlight').trim();
+      const accentSoft = style.getPropertyValue('--accent-soft').trim();
+
+      ctx.save();
+
+      switch (frameIdx) {
+        case 1: {
+          // ---- NEON MARQUEE ----
+          // Double neon border with glow — like a motel sign
+          const inset = w * 0.04;
+          const innerInset = w * 0.06;
+
+          // Outer glow
+          ctx.shadowColor = primary;
+          ctx.shadowBlur = 20;
+          ctx.strokeStyle = primary;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+
+          // Inner line
+          ctx.shadowBlur = 12;
+          ctx.strokeStyle = accent;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(innerInset, innerInset, w - innerInset * 2, h - innerInset * 2);
+          ctx.shadowBlur = 0;
+
+          // Corner dots (like marquee bulbs)
+          const bulbR = w * 0.008;
+          const corners = [
+            [inset, inset], [w - inset, inset],
+            [inset, h - inset], [w - inset, h - inset]
+          ];
+          corners.forEach(([cx, cy]) => {
+            ctx.beginPath();
+            ctx.arc(cx, cy, bulbR * 2, 0, Math.PI * 2);
+            ctx.fillStyle = highlight;
+            ctx.shadowColor = highlight;
+            ctx.shadowBlur = 15;
+            ctx.fill();
+          });
+
+          // Bulbs along edges
+          ctx.shadowBlur = 8;
+          const spacing = w * 0.06;
+          for (let x = inset + spacing; x < w - inset; x += spacing) {
+            ctx.beginPath();
+            ctx.arc(x, inset, bulbR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x, h - inset, bulbR, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          for (let y = inset + spacing; y < h - inset; y += spacing) {
+            ctx.beginPath();
+            ctx.arc(inset, y, bulbR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w - inset, y, bulbR, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        }
+
+        case 2: {
+          // ---- GLITTER VIGNETTE ----
+          // Heavy dramatic vignette with scattered sparkles
+          const vigGrad = ctx.createRadialGradient(
+            w / 2, h / 2, w * 0.2,
+            w / 2, h / 2, w * 0.7
+          );
+          vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+          vigGrad.addColorStop(0.5, 'rgba(0,0,0,0.15)');
+          vigGrad.addColorStop(0.8, 'rgba(0,0,0,0.5)');
+          vigGrad.addColorStop(1, 'rgba(0,0,0,0.85)');
+          ctx.fillStyle = vigGrad;
+          ctx.fillRect(0, 0, w, h);
+
+          // Scattered sparkles around the edges
+          // Use a seeded-ish pattern so they don't jump every frame
+          const sparkleCount = 30;
+          for (let i = 0; i < sparkleCount; i++) {
+            // Distribute around the edges using fixed pattern
+            const angle = (i / sparkleCount) * Math.PI * 2;
+            const edgeDist = 0.35 + (((i * 7) % 13) / 13) * 0.15;
+            const sx = w / 2 + Math.cos(angle) * w * edgeDist;
+            const sy = h / 2 + Math.sin(angle) * h * edgeDist;
+            const size = w * 0.01 + (((i * 3) % 7) / 7) * w * 0.015;
+            // Alternate between primary and highlight colors
+            const col = i % 3 === 0 ? highlight : (i % 3 === 1 ? primary : accent);
+            const alpha = 0.4 + (((i * 11) % 10) / 10) * 0.5;
+            drawSparkle(ctx, sx, sy, size, col, alpha);
+          }
+          break;
+        }
+
+        case 3: {
+          // ---- DRAG PAGEANT ----
+          // Ornate corner flourishes + crown at top center
+          const m = w * 0.05; // margin
+
+          // Corner flourishes — curved decorative lines
+          ctx.strokeStyle = highlight;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = highlight;
+          ctx.shadowBlur = 8;
+          const fLen = w * 0.12;
+
+          // Draw L-shaped flourishes with curved ends at each corner
+          [[m, m, 1, 1], [w - m, m, -1, 1], [m, h - m, 1, -1], [w - m, h - m, -1, -1]].forEach(([cx, cy, dx, dy]) => {
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + dy * fLen);
+            ctx.quadraticCurveTo(cx, cy, cx + dx * fLen * 0.3, cy);
+            ctx.lineTo(cx + dx * fLen, cy);
+            ctx.stroke();
+            // Decorative dot at end
+            ctx.beginPath();
+            ctx.arc(cx + dx * fLen, cy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = highlight;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx, cy + dy * fLen, 3, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          ctx.shadowBlur = 0;
+
+          // Crown at top center
+          const crownW = w * 0.15;
+          const crownH = h * 0.05;
+          const crownX = w / 2;
+          const crownY = m + crownH * 0.5;
+
+          ctx.strokeStyle = highlight;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = highlight;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.moveTo(crownX - crownW / 2, crownY + crownH / 2);
+          ctx.lineTo(crownX - crownW / 2, crownY);
+          ctx.lineTo(crownX - crownW / 4, crownY + crownH * 0.3);
+          ctx.lineTo(crownX, crownY - crownH / 2);
+          ctx.lineTo(crownX + crownW / 4, crownY + crownH * 0.3);
+          ctx.lineTo(crownX + crownW / 2, crownY);
+          ctx.lineTo(crownX + crownW / 2, crownY + crownH / 2);
+          ctx.stroke();
+
+          // Crown jewels (dots at tips)
+          [crownX - crownW / 2, crownX - crownW / 4, crownX, crownX + crownW / 4, crownX + crownW / 2].forEach((jx, ji) => {
+            const jy = ji === 2 ? crownY - crownH / 2 : (ji % 2 === 0 ? crownY : crownY + crownH * 0.3);
+            ctx.beginPath();
+            ctx.arc(jx, jy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = ji === 2 ? primary : highlight;
+            ctx.fill();
+          });
+
+          // Stars flanking crown
+          drawStar(ctx, crownX - crownW * 0.8, crownY, w * 0.015, accent, 0.7);
+          drawStar(ctx, crownX + crownW * 0.8, crownY, w * 0.015, accent, 0.7);
+          break;
+        }
+
+        case 4: {
+          // ---- POLAROID DREAMY ----
+          // Thick white bottom border, thin top/sides, soft vignette
+          const borderSide = w * 0.03;
+          const borderTop = w * 0.03;
+          const borderBottom = h * 0.12;
+
+          // White border (slightly warm tinted)
+          ctx.fillStyle = '#faf5ef';
+          // Top
+          ctx.fillRect(0, 0, w, borderTop);
+          // Bottom
+          ctx.fillRect(0, h - borderBottom, w, borderBottom);
+          // Left
+          ctx.fillRect(0, 0, borderSide, h);
+          // Right
+          ctx.fillRect(w - borderSide, 0, borderSide, h);
+
+          // Soft inner shadow along border edges
+          const innerGlow = ctx.createRadialGradient(
+            w / 2, h * 0.45, w * 0.25,
+            w / 2, h * 0.45, w * 0.55
+          );
+          innerGlow.addColorStop(0, 'rgba(0,0,0,0)');
+          innerGlow.addColorStop(1, 'rgba(0,0,0,0.12)');
+          ctx.fillStyle = innerGlow;
+          ctx.fillRect(borderSide, borderTop, w - borderSide * 2, h - borderTop - borderBottom);
+
+          // Small star in bottom border area
+          const starY = h - borderBottom / 2;
+          drawSparkle(ctx, w / 2, starY, w * 0.015, primary, 0.5);
+
+          break;
+        }
+
+        case 5: {
+          // ---- STAR BURST ----
+          // Radiating stars from corners with light leak gradient
+          // Light leak overlays from corners
+          const leakGrad1 = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.5);
+          leakGrad1.addColorStop(0, primary.replace(')', ',0.2)').replace('rgb', 'rgba'));
+          leakGrad1.addColorStop(0.5, 'rgba(255,0,0,0)');
+          ctx.fillStyle = leakGrad1;
+          ctx.fillRect(0, 0, w, h);
+
+          const leakGrad2 = ctx.createRadialGradient(w, h, 0, w, h, w * 0.5);
+          leakGrad2.addColorStop(0, highlight.replace(')', ',0.15)').replace('rgb', 'rgba'));
+          leakGrad2.addColorStop(0.5, 'rgba(255,0,0,0)');
+          ctx.fillStyle = leakGrad2;
+          ctx.fillRect(0, 0, w, h);
+
+          // Stars radiating from corners
+          const starPositions = [
+            // Top-left cluster
+            [w * 0.06, h * 0.06, 0.025], [w * 0.12, h * 0.04, 0.015], [w * 0.04, h * 0.13, 0.018],
+            // Top-right cluster
+            [w * 0.94, h * 0.06, 0.025], [w * 0.88, h * 0.04, 0.015], [w * 0.96, h * 0.13, 0.018],
+            // Bottom-left cluster
+            [w * 0.06, h * 0.94, 0.02], [w * 0.12, h * 0.96, 0.012], [w * 0.04, h * 0.87, 0.015],
+            // Bottom-right cluster
+            [w * 0.94, h * 0.94, 0.02], [w * 0.88, h * 0.96, 0.012], [w * 0.96, h * 0.87, 0.015],
+            // Scattered mid-edges
+            [w * 0.5, h * 0.03, 0.012], [w * 0.5, h * 0.97, 0.012],
+            [w * 0.03, h * 0.5, 0.012], [w * 0.97, h * 0.5, 0.012],
+          ];
+
+          starPositions.forEach(([sx, sy, sizeRatio], i) => {
+            const col = i % 3 === 0 ? highlight : (i % 3 === 1 ? accent : primary);
+            drawStar(ctx, sx, sy, w * sizeRatio, col, 0.6 + (i % 3) * 0.15);
+          });
+          break;
+        }
+
+        case 6: {
+          // ---- COUNTY FAIR ----
+          // Scalloped carnival-ticket edge with warm inner glow
+          const scallop = w * 0.025;
+          const border = w * 0.03;
+
+          // Warm border glow
+          ctx.fillStyle = 'rgba(0,0,0,0.4)';
+          ctx.fillRect(0, 0, w, border);
+          ctx.fillRect(0, h - border, w, border);
+          ctx.fillRect(0, 0, border, h);
+          ctx.fillRect(w - border, 0, border, h);
+
+          // Scalloped edge — punch semicircular notches along border
+          // This creates the carnival ticket / county fair ribbon look
+          ctx.globalCompositeOperation = 'destination-out';
+          const scSpacing = scallop * 2.5;
+
+          // Top and bottom scallops
+          for (let x = scSpacing; x < w - scSpacing / 2; x += scSpacing) {
+            ctx.beginPath();
+            ctx.arc(x, 0, scallop, 0, Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x, h, scallop, Math.PI, Math.PI * 2);
+            ctx.fill();
+          }
+          // Left and right scallops
+          for (let y = scSpacing; y < h - scSpacing / 2; y += scSpacing) {
+            ctx.beginPath();
+            ctx.arc(0, y, scallop, -Math.PI / 2, Math.PI / 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w, y, scallop, Math.PI / 2, Math.PI * 1.5);
+            ctx.fill();
+          }
+          ctx.globalCompositeOperation = 'source-over';
+
+          // Inner neon line following the scallop
+          ctx.strokeStyle = primary;
+          ctx.lineWidth = 1.5;
+          ctx.shadowColor = primary;
+          ctx.shadowBlur = 10;
+          const inset = border + scallop * 0.5;
+          ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+          ctx.shadowBlur = 0;
+
+          // Small decorative stars at corners inside border
+          const ci = border * 1.8;
+          drawStar(ctx, ci, ci, w * 0.012, highlight, 0.8);
+          drawStar(ctx, w - ci, ci, w * 0.012, highlight, 0.8);
+          drawStar(ctx, ci, h - ci, w * 0.012, highlight, 0.8);
+          drawStar(ctx, w - ci, h - ci, w * 0.012, highlight, 0.8);
+          break;
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // ============================================
     // CAMERA RENDER LOOP
     // Each frame: draw video to canvas, read pixels,
     // apply color filter math, write pixels back.
@@ -1810,6 +2211,9 @@
       // Write filtered pixels back
       cameraCtx.putImageData(imageData, 0, 0);
 
+      // Draw decorative frame/vignette on top of filtered image
+      drawCameraFrame(cameraCtx, w, h);
+
       state.cameraAnimFrame = requestAnimationFrame(renderCamera);
     }
 
@@ -1871,6 +2275,7 @@
     document.getElementById('btnCamera').addEventListener('click', openCamera);
     document.getElementById('btnCamClose').addEventListener('click', closeCamera);
     document.getElementById('btnCamFilter').addEventListener('click', cycleCameraFilter);
+    document.getElementById('btnCamFrame').addEventListener('click', cycleCameraFrame);
     document.getElementById('btnCamFlip').addEventListener('click', flipCamera);
     document.getElementById('btnShutter').addEventListener('click', capturePhoto);
 
