@@ -1596,7 +1596,6 @@
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: state.facingMode,
-            // Request decent resolution but not too high for performance
             width: { ideal: 1280 },
             height: { ideal: 720 },
           },
@@ -1606,15 +1605,25 @@
         cameraVideo.srcObject = stream;
         state.cameraStream = stream;
 
-        // Wait for video to be ready before sizing canvas
+        // Explicitly call play() — mobile browsers ignore the
+        // autoplay attribute even on muted video elements.
+        // This is the most common reason for a black camera canvas.
+        await cameraVideo.play();
+
+        // Wait for actual video frames to be available.
+        // readyState 2+ means at least one frame is decoded.
+        // Without this, drawImage pulls a blank black frame.
         await new Promise((resolve) => {
-          cameraVideo.onloadedmetadata = () => {
-            // Match canvas to video dimensions
-            cameraCanvas.width = cameraVideo.videoWidth;
-            cameraCanvas.height = cameraVideo.videoHeight;
+          if (cameraVideo.readyState >= 2) {
             resolve();
-          };
+          } else {
+            cameraVideo.addEventListener('loadeddata', resolve, { once: true });
+          }
         });
+
+        // Now we know frames are flowing — size the canvas to match
+        cameraCanvas.width = cameraVideo.videoWidth;
+        cameraCanvas.height = cameraVideo.videoHeight;
 
         // Show camera UI, hide fractal UI
         state.cameraActive = true;
@@ -1659,18 +1668,22 @@
     async function flipCamera() {
       // Toggle between front and back camera
       state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
-      // Restart camera with new facing mode
       if (state.cameraActive) {
+        // Fully close current camera first
         if (state.cameraStream) {
           state.cameraStream.getTracks().forEach(t => t.stop());
+          state.cameraStream = null;
         }
+        cameraVideo.srcObject = null;
         if (state.cameraAnimFrame) {
           cancelAnimationFrame(state.cameraAnimFrame);
+          state.cameraAnimFrame = null;
         }
-        // Brief delay for camera hardware to release
-        await new Promise(r => setTimeout(r, 200));
-        // Re-open with flipped camera
+        // Hide camera layer during switch to avoid flash
         state.cameraActive = false;
+        // Brief delay for camera hardware to fully release
+        await new Promise(r => setTimeout(r, 300));
+        // Re-open with flipped facing mode
         openCamera();
       }
     }
@@ -1691,6 +1704,13 @@
 
       const w = cameraCanvas.width;
       const h = cameraCanvas.height;
+
+      // Skip frame if video isn't ready yet (prevents black frames
+      // during camera switches or brief stalls)
+      if (cameraVideo.readyState < 2) {
+        state.cameraAnimFrame = requestAnimationFrame(renderCamera);
+        return;
+      }
 
       // Draw current video frame to canvas
       cameraCtx.drawImage(cameraVideo, 0, 0, w, h);
