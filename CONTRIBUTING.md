@@ -60,7 +60,6 @@ If you want to contribute code:
 Please:
 - Keep PRs focused and readable
 - Add comments where logic might be unclear
-- Be kind — this is a human-centered project
 
 ---
 
