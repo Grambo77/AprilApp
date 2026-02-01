@@ -846,6 +846,237 @@
       opacity: 0.7;
       transition: none;
     }
+
+    /* ============================================
+       TRIVIA MODE
+       Full-screen quiz overlay with themed styling.
+       Sits on top of the fractal (which keeps
+       auto-animating behind it as a backdrop).
+    ============================================ */
+    .trivia-layer {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 30;
+      background: rgba(10, 2, 15, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      overflow-y: auto;
+    }
+
+    .trivia-layer.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .trivia-card {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .trivia-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .trivia-progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .trivia-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    .trivia-category {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 8px;
+    }
+
+    .trivia-question {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--text-light);
+      line-height: 1.5;
+      margin-bottom: 28px;
+      min-height: 3.6em;
+    }
+
+    .trivia-answers {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .trivia-answer-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--text-light);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .trivia-answer-btn:active {
+      transform: scale(0.98);
+    }
+
+    .trivia-answer-btn.selected {
+      border-color: var(--primary);
+      background: rgba(255,255,255,0.1);
+    }
+
+    .trivia-answer-btn.correct {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+    }
+
+    .trivia-answer-btn.wrong {
+      border-color: #f87171;
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+    }
+
+    .trivia-answer-btn.reveal {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.08);
+    }
+
+    .trivia-answer-btn.disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .trivia-feedback {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      min-height: 2.5em;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .trivia-next-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 10px 28px;
+      color: var(--text-light);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .trivia-next-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .trivia-next-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Results screen at end of round */
+    .trivia-results {
+      text-align: center;
+    }
+
+    .trivia-score-big {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 3.5rem;
+      color: var(--primary);
+      text-shadow: 0 0 30px var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .trivia-score-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 24px;
+    }
+
+    .trivia-result-msg {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--text-light);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .trivia-result-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .trivia-result-btns .btn {
+      min-width: 120px;
+    }
+
+    .trivia-close-btn {
+      position: absolute;
+      top: max(16px, env(safe-area-inset-top));
+      right: 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .trivia-close-btn:active { transform: scale(0.9); }
   </style>
 </head>
 <body>
@@ -891,6 +1122,42 @@
 
   <!-- Tap target for hiding UI — invisible layer over canvases -->
   <div id="tapTarget" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:5;"></div>
+
+  <!-- ============================================
+       TRIVIA MODE
+       Full-screen quiz overlay. Fractal keeps
+       animating behind the frosted glass backdrop.
+  ============================================ -->
+  <div class="trivia-layer" id="triviaLayer">
+    <button class="trivia-close-btn" id="triviaCloseBtn">×</button>
+    <div class="trivia-card" id="triviaCard">
+      <!-- Question view (shown during quiz) -->
+      <div id="triviaQuestionView">
+        <div class="trivia-header">
+          <span id="triviaQNum">Question 1 / 10</span>
+          <span id="triviaScore">Score: 0</span>
+        </div>
+        <div class="trivia-progress-bar">
+          <div class="trivia-progress-fill" id="triviaProgress" style="width:10%"></div>
+        </div>
+        <div class="trivia-category" id="triviaCategory">✦ career ✦</div>
+        <div class="trivia-question" id="triviaQuestion">Loading...</div>
+        <div class="trivia-answers" id="triviaAnswers"></div>
+        <div class="trivia-feedback" id="triviaFeedback"></div>
+        <button class="trivia-next-btn" id="triviaNextBtn">Next ✦</button>
+      </div>
+      <!-- Results view (shown after 10 questions) -->
+      <div id="triviaResultsView" class="trivia-results" style="display:none;">
+        <div class="trivia-score-big" id="triviaFinalScore">8/10</div>
+        <div class="trivia-score-label">Midwest Princess Rating</div>
+        <div class="trivia-result-msg" id="triviaResultMsg">You really know your stuff!</div>
+        <div class="trivia-result-btns">
+          <button class="btn" id="triviaPlayAgain"><span class="btn-icon">✦</span> Play Again</button>
+          <button class="btn" id="triviaExit"><span class="btn-icon">✕</span> Back to Fractals</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================================
        CAMERA MODE
@@ -953,6 +1220,7 @@
       <button class="btn" id="btnEditQuotes"><span class="btn-icon">✎</span> Edit</button>
       <button class="btn" id="btnCamera"><span class="btn-icon">📷</span> Camera</button>
       <button class="btn" id="btnEditPhoto"><span class="btn-icon">🖼</span> Edit</button>
+      <button class="btn" id="btnTrivia"><span class="btn-icon">?</span> Trivia</button>
       <button class="btn" id="btnFullscreen"><span class="btn-icon">⛶</span> Full</button>
     </div>
     <div class="slider-row">
@@ -2269,6 +2537,532 @@
     }
 
     // ============================================
+    // TRIVIA GAME
+    // 10-question rounds pulled from a bank of 50+
+    // questions across 5 categories. All questions
+    // are copyright-safe — they describe themes,
+    // reference career facts, and test knowledge
+    // without quoting any lyrics.
+    //
+    // Categories:
+    //   🎵 Name That Song — describe a song's theme
+    //   🎤 Career & Life  — biographical facts
+    //   💿 Album Knowledge — track listings, release info
+    //   🎪 Tours & Shows  — live performance facts
+    //   ✨ Superfan       — deep cuts for real ones
+    // ============================================
+
+    const TRIVIA_QUESTIONS = [
+      // ---- NAME THAT SONG ----
+      {
+        category: '🎵 name that song',
+        question: 'Which song tells the story of a girl from the Midwest who dreams of being a go-go dancer at a gay bar in West Hollywood?',
+        answers: ['Pink Pony Club', 'Naked in Manhattan', 'Femininomenon', 'California'],
+        correct: 0,
+        feedback: 'Inspired by The Abbey, a famous gay bar in West Hollywood.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song is a bittersweet anthem about liking a girl who is in denial about her own sexuality?',
+        answers: ['Casual', 'Good Luck, Babe!', 'Red Wine Supernova', 'Naked in Manhattan'],
+        correct: 1,
+        feedback: 'Released in April 2024, it became her biggest hit and reached the top 5 worldwide.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which upbeat track features a crowd-participation dance move that spells out letters with your arms?',
+        answers: ['Femininomenon', 'HOT TO GO!', 'Super Graphic Ultra Modern Girl', 'My Kink Is Karma'],
+        correct: 1,
+        feedback: 'The H-O-T-T-O-G-O dance became a viral sensation at her live shows and festivals.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song describes the frustration of being treated as unimportant in a relationship — like the other person could take it or leave it?',
+        answers: ['Coffee', 'Casual', 'After Midnight', 'Love Me Anyway'],
+        correct: 1,
+        feedback: 'A heartbreak anthem that became one of the standout tracks from her debut album.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which track is about an instant, electric attraction to a woman — comparing her to a cosmic event?',
+        answers: ['Red Wine Supernova', 'Good Luck, Babe!', 'Naked in Manhattan', 'Pink Pony Club'],
+        correct: 0,
+        feedback: 'The song uses space imagery to describe an explosive romantic connection.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song captures the excitement and freedom of running around New York City with a new love interest?',
+        answers: ['California', 'After Midnight', 'Naked in Manhattan', 'Picture You'],
+        correct: 2,
+        feedback: 'One of her first releases after rebranding, embracing her queer identity openly.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which track is about wanting karma to come back around on someone who did you wrong in love?',
+        answers: ['My Kink Is Karma', 'Casual', 'After Midnight', 'Love Me Anyway'],
+        correct: 0,
+        feedback: 'A revenge-themed bop with a catchy hook and bold attitude.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song describes feeling like every woman she encounters has an overwhelming, almost supernatural pull?',
+        answers: ['HOT TO GO!', 'Red Wine Supernova', 'Femininomenon', 'Super Graphic Ultra Modern Girl'],
+        correct: 2,
+        feedback: 'The title is a play on "phenomenon" — celebrating the power of femininity.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song is a moody, late-night track about sneaking out and the thrill of forbidden nightlife?',
+        answers: ['After Midnight', 'Pink Pony Club', 'California', 'Coffee'],
+        correct: 0,
+        feedback: 'Captures the excitement and danger of nighttime escapades.'
+      },
+      {
+        category: '🎵 name that song',
+        question: 'Which song describes being infatuated with a bold, eye-catching woman who feels like she stepped out of a comic book?',
+        answers: ['Femininomenon', 'Red Wine Supernova', 'Super Graphic Ultra Modern Girl', 'HOT TO GO!'],
+        correct: 2,
+        feedback: 'The title itself sounds like a pop-art description of a larger-than-life crush.'
+      },
+
+      // ---- CAREER & LIFE ----
+      {
+        category: '🎤 career & life',
+        question: 'What is Chappell Roan\'s real name?',
+        answers: ['Kayleigh Rose Amstutz', 'Charlotte Roan Mitchell', 'Chappell Rose Anderson', 'Kaylee Ann Chappell'],
+        correct: 0,
+        feedback: 'Born Kayleigh Rose Amstutz on February 19, 1998, in Willard, Missouri.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'How did Chappell Roan choose her stage name?',
+        answers: ['A random name generator', 'After her grandfather and his favorite song', 'It was her childhood nickname', 'Her first producer named her'],
+        correct: 1,
+        feedback: 'Honoring her grandfather Dennis Chappell and his favorite song "The Strawberry Roan."'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'Which major record label first signed Chappell Roan as a teenager?',
+        answers: ['Island Records', 'Columbia Records', 'Atlantic Records', 'Sony Music'],
+        correct: 2,
+        feedback: 'She signed with Atlantic at just 17 years old after uploading music to YouTube.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'What happened to Chappell Roan\'s first record deal?',
+        answers: ['She left to go independent', 'The label merged with another', 'She was dropped in 2020', 'She renegotiated for more control'],
+        correct: 2,
+        feedback: 'Atlantic dropped her after "Pink Pony Club" didn\'t generate enough commercial interest at first.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'What does Chappell Roan compare her stage persona to?',
+        answers: ['A superhero alter ego', 'Hannah Montana / a drag persona', 'A character from a movie', 'Her childhood imaginary friend'],
+        correct: 1,
+        feedback: 'She\'s described "Chappell Roan" as her drag persona — more open and confident than her real self.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'Where did Chappell Roan grow up?',
+        answers: ['Austin, Texas', 'Willard, Missouri', 'Nashville, Tennessee', 'Portland, Oregon'],
+        correct: 1,
+        feedback: 'She grew up in a small, conservative Missouri town and attended church three times a week.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'What was the name of the first original song she uploaded to YouTube as a teenager?',
+        answers: ['Good Hurt', 'Die Young', 'Pink Pony Club', 'School Nights'],
+        correct: 1,
+        feedback: 'Written at summer camp at the Interlochen Center for the Arts — she said it changed her trajectory forever.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'What award did Chappell Roan win at the 2025 Grammy Awards?',
+        answers: ['Best Pop Album', 'Song of the Year', 'Best New Artist', 'Best Music Video'],
+        correct: 2,
+        feedback: 'She took home Best New Artist at the 2025 Grammys after her breakout year.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'Which famous pop star\'s tour did Chappell Roan open for in 2022-2024?',
+        answers: ['Taylor Swift', 'Billie Eilish', 'Olivia Rodrigo', 'Dua Lipa'],
+        correct: 2,
+        feedback: 'She opened for Olivia Rodrigo on the GUTS tour, which helped launch her into the mainstream.'
+      },
+      {
+        category: '🎤 career & life',
+        question: 'What kind of work did Chappell do after being dropped from her label during the pandemic?',
+        answers: ['Worked at a coffee shop and as a nanny', 'Became a studio session musician', 'Taught music lessons online', 'Worked at a record store'],
+        correct: 0,
+        feedback: 'She worked odd jobs including barista shifts to support herself while figuring out her next move.'
+      },
+
+      // ---- ALBUM KNOWLEDGE ----
+      {
+        category: '💿 album knowledge',
+        question: 'What is the title of Chappell Roan\'s debut studio album?',
+        answers: ['School Nights', 'Midwest Princess', 'The Rise and Fall of a Midwest Princess', 'Good Luck, Babe!'],
+        correct: 2,
+        feedback: 'Released September 22, 2023, through Island Records — it became a massive sleeper hit.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'What was the name of her 2017 EP released through Atlantic Records?',
+        answers: ['Die Young', 'Good Hurt', 'School Nights', 'Pink Pony'],
+        correct: 2,
+        feedback: 'Her debut EP, released when she was 19, featured a more "witchy, dark, serious" sound.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Which of these is NOT a track on "The Rise and Fall of a Midwest Princess"?',
+        answers: ['Femininomenon', 'Good Luck, Babe!', 'Red Wine Supernova', 'Casual'],
+        correct: 1,
+        feedback: '"Good Luck, Babe!" was released in April 2024 as a standalone single — the first song of her next chapter.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Which song was the lead single that eventually went viral on TikTok in 2021, over a year after its release?',
+        answers: ['Good Hurt', 'Naked in Manhattan', 'Pink Pony Club', 'HOT TO GO!'],
+        correct: 2,
+        feedback: 'Released April 2020 to little fanfare, it exploded on TikTok the following summer.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'How many tracks concurrently charted on the Billboard Hot 100 during her peak in 2024?',
+        answers: ['Three', 'Four', 'Six', 'Eight'],
+        correct: 2,
+        feedback: 'Six tracks from her debut charted simultaneously — an incredible feat for a debut album.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Where did "Good Luck, Babe!" peak on the US Billboard Hot 100?',
+        answers: ['Number 1', 'Number 4', 'Number 10', 'Number 15'],
+        correct: 1,
+        feedback: 'It reached number 4 and became an international top-five single.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Which producer has been Chappell Roan\'s primary collaborator since 2018?',
+        answers: ['Jack Antonoff', 'Dan Nigro', 'Max Martin', 'Finneas O\'Connell'],
+        correct: 1,
+        feedback: 'Dan Nigro has been her main producer and songwriting partner — he also produced Olivia Rodrigo\'s debut.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'What genre is "The Giver," her 2025 single that debuted at #1 on the Hot Country Songs chart?',
+        answers: ['Synth-pop', 'Indie rock', 'Country', 'R&B'],
+        correct: 2,
+        feedback: 'Her first foray into country — she\'s only the third woman after Beyoncé and Bebe Rexha to lead the chart with a first entry.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Chappell\'s music style is most commonly described as being influenced by which decade?',
+        answers: ['1970s disco', '1980s synth-pop', '1990s grunge', '2000s emo'],
+        correct: 1,
+        feedback: 'Her sound draws heavily from 80s synth-pop combined with campy, maximalist pop production.'
+      },
+      {
+        category: '💿 album knowledge',
+        question: 'Which song from the debut album is described as a revenge-themed track with a bold, unapologetic attitude?',
+        answers: ['After Midnight', 'Coffee', 'My Kink Is Karma', 'Casual'],
+        correct: 2,
+        feedback: 'One of the self-funded singles that accompanied her queer-embracing rebrand.'
+      },
+
+      // ---- TOURS & SHOWS ----
+      {
+        category: '🎪 tours & shows',
+        question: 'At which 2024 music festival did Chappell Roan\'s daytime set draw a bigger crowd than some headliners?',
+        answers: ['Glastonbury', 'Coachella', 'SXSW', 'Reading Festival'],
+        correct: 1,
+        feedback: 'Her Coachella performance became a cultural moment and helped launch her into the mainstream.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'What was the name of her headlining tour?',
+        answers: ['The Midwest Princess Tour', 'The Rise and Fall Tour', 'The Pink Pony Tour', 'Naked in North America Tour'],
+        correct: 0,
+        feedback: 'The Midwest Princess Tour saw her go from small venues to sold-out shows.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'Which iconic musician has publicly expressed being a fan of Chappell Roan?',
+        answers: ['Madonna', 'Elton John', 'Dolly Parton', 'Stevie Nicks'],
+        correct: 1,
+        feedback: 'Elton John has been a vocal supporter of her music and artistry.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'Which late-night TV show did Chappell Roan appear on, performing and being interviewed?',
+        answers: ['Late Show with Stephen Colbert', 'The Tonight Show with Jimmy Fallon', 'Jimmy Kimmel Live', 'Late Night with Seth Meyers'],
+        correct: 1,
+        feedback: 'Her Tonight Show appearance was a major milestone in her mainstream breakthrough.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'Which artist\'s tour did she open for in 2017, early in her career?',
+        answers: ['Ed Sheeran', 'Vance Joy', 'Harry Styles', 'Hozier'],
+        correct: 1,
+        feedback: 'She supported Vance Joy on his Lay It On Me Tour while still on Atlantic Records.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'On which TV show did Chappell first perform "The Giver" before its official release?',
+        answers: ['Good Morning America', 'Saturday Night Live', 'The Tonight Show', 'The Grammy Awards'],
+        correct: 1,
+        feedback: 'She performed it on SNL in November 2024, months before the official March 2025 release.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'Her live performances are known for their bold aesthetic inspired by which culture?',
+        answers: ['Broadway musicals', 'Drag queens and camp', 'K-pop', '1970s punk'],
+        correct: 1,
+        feedback: 'Drag culture and camp are central to her visual identity — from costumes to makeup to stage design.'
+      },
+      {
+        category: '🎪 tours & shows',
+        question: 'Chappell Roan publicly spoke out about what aspect of her sudden fame?',
+        answers: ['Not making enough money', 'Creepy and invasive fan behavior', 'Label disputes', 'Missing her old sound'],
+        correct: 1,
+        feedback: 'She set boundaries publicly, calling out behavior she considered invasive and unhealthy.'
+      },
+
+      // ---- SUPERFAN ----
+      {
+        category: '✨ superfan',
+        question: 'What specific West Hollywood venue inspired "Pink Pony Club"?',
+        answers: ['The Troubadour', 'The Abbey', 'The Roxy', 'Whisky a Go Go'],
+        correct: 1,
+        feedback: 'The Abbey is a legendary gay bar in WeHo that became her creative inspiration.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'What was the name of Chappell Roan\'s grandfather who inspired her stage name?',
+        answers: ['Robert Roan', 'Dennis Chappell', 'William Rose', 'James Amstutz'],
+        correct: 1,
+        feedback: 'Dennis K. Chappell, who passed away from brain cancer in 2016.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'What was the title of her grandfather\'s favorite song, which inspired the "Roan" part of her name?',
+        answers: ['The Red Pony', 'The Strawberry Roan', 'Roan Mountain', 'The Wild Mustang'],
+        correct: 1,
+        feedback: 'A classic cowboy poem/song by Curley Fletcher about an unrideable horse.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'Where did Chappell write her breakout first original song "Die Young"?',
+        answers: ['Her bedroom in Willard', 'A Nashville songwriting retreat', 'Interlochen Center for the Arts summer camp', 'A studio in Los Angeles'],
+        correct: 2,
+        feedback: 'She said that attending Interlochen "changed my trajectory forever."'
+      },
+      {
+        category: '✨ superfan',
+        question: 'Chappell has said the idea for her "tacky pop star" look came from conversations with whom?',
+        answers: ['Her makeup artist', 'Her therapist', 'Dan Nigro', 'Her mother'],
+        correct: 1,
+        feedback: 'The concept emerged while discussing her inner child in therapy sessions.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'What is Chappell Roan\'s reported height?',
+        answers: ['5\'2"', '5\'5"', '5\'7"', '5\'9"'],
+        correct: 0,
+        feedback: 'She stands at 5 feet 2 inches — a small-but-mighty pop powerhouse.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'What is Chappell\'s mom\'s profession?',
+        answers: ['Music teacher', 'Veterinarian', 'Nurse', 'Accountant'],
+        correct: 1,
+        feedback: 'Her mother Kara is a veterinarian who runs a practice in Springfield, Missouri.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'Which Billboard honor did Chappell Roan receive for 2024?',
+        answers: ['Artist of the Year', 'Top New Artist', 'Top Female Artist', 'Breakthrough International'],
+        correct: 1,
+        feedback: 'Billboard named her the top new artist of 2024, along with her VMA Best New Artist win.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'After being dropped from Atlantic, Chappell moved home. What did she tell Paper Magazine about her plan?',
+        answers: ['She would try acting instead', 'She gave herself one year to make it independently', 'She planned to become a songwriter for others', 'She was going to go back to school'],
+        correct: 1,
+        feedback: 'One year to make it — and she did. She came back with a new look, new sound, and new label.'
+      },
+      {
+        category: '✨ superfan',
+        question: 'How many children are in Chappell Roan\'s family, including her?',
+        answers: ['Two', 'Three', 'Four', 'Five'],
+        correct: 2,
+        feedback: 'She is the eldest of four children in the Amstutz family.'
+      },
+    ];
+
+    // Result messages based on score — themed for the Midwest Princess
+    const TRIVIA_RESULTS = [
+      { min: 0,  max: 3,  msg: 'Just getting started — time to stream the discography on repeat!' },
+      { min: 4,  max: 5,  msg: 'Casual fan energy... but we see you warming up!' },
+      { min: 6,  max: 7,  msg: 'Solid knowledge! You\'re definitely on the rise.' },
+      { min: 8,  max: 8,  msg: 'Impressive! You\'re a true Midwest Princess.' },
+      { min: 9,  max: 9,  msg: 'Superfan status! Chappell would be proud.' },
+      { min: 10, max: 10, msg: 'PERFECT SCORE! You ARE the Midwest Princess! 👑' },
+    ];
+
+    // Trivia game state
+    const triviaState = {
+      active: false,
+      questions: [],     // 10 shuffled questions for current round
+      currentQ: 0,       // Which question we're on (0-9)
+      score: 0,
+      answered: false,   // Has user answered the current question?
+    };
+
+    // Fisher-Yates shuffle — used to randomize questions
+    // and answer order each round
+    function shuffleArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startTrivia() {
+      // Stop any active modes
+      if (state.micActive) disableMic();
+      if (state.quoteMode) toggleQuoteMode();
+      if (state.cameraActive) closeCamera();
+      if (state.editorActive) closePhotoEditor();
+
+      // Pick 10 random questions, ensuring category variety.
+      // Shuffle the full bank, then take the first 10.
+      // This gives a good mix naturally since categories
+      // are roughly evenly distributed in the bank.
+      const shuffled = shuffleArray(TRIVIA_QUESTIONS);
+      triviaState.questions = shuffled.slice(0, 10);
+      triviaState.currentQ = 0;
+      triviaState.score = 0;
+      triviaState.answered = false;
+      triviaState.active = true;
+
+      // Show trivia UI, hide main UI
+      document.getElementById('triviaLayer').classList.add('active');
+      document.getElementById('topBar').classList.add('ui-hidden');
+      document.getElementById('bottomBar').classList.add('ui-hidden');
+
+      // Show question view, hide results
+      document.getElementById('triviaQuestionView').style.display = '';
+      document.getElementById('triviaResultsView').style.display = 'none';
+
+      renderTriviaQuestion();
+    }
+
+    function renderTriviaQuestion() {
+      const q = triviaState.questions[triviaState.currentQ];
+      const num = triviaState.currentQ + 1;
+
+      // Update header
+      document.getElementById('triviaQNum').textContent = 'Question ' + num + ' / 10';
+      document.getElementById('triviaScore').textContent = 'Score: ' + triviaState.score;
+      document.getElementById('triviaProgress').style.width = (num * 10) + '%';
+      document.getElementById('triviaCategory').textContent = '✦ ' + q.category + ' ✦';
+      document.getElementById('triviaQuestion').textContent = q.question;
+
+      // Shuffle the answer indices so the correct answer
+      // isn't always in the same position
+      const indices = shuffleArray([0, 1, 2, 3]);
+
+      // Build answer buttons
+      const container = document.getElementById('triviaAnswers');
+      container.innerHTML = '';
+
+      indices.forEach((origIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'trivia-answer-btn';
+        btn.textContent = q.answers[origIdx];
+        btn.dataset.index = origIdx;
+        btn.addEventListener('click', () => handleTriviaAnswer(btn, origIdx, q));
+        container.appendChild(btn);
+      });
+
+      // Clear feedback and hide next button
+      document.getElementById('triviaFeedback').textContent = '';
+      document.getElementById('triviaNextBtn').classList.remove('visible');
+      triviaState.answered = false;
+    }
+
+    function handleTriviaAnswer(btn, selectedIdx, question) {
+      // Prevent double-answering
+      if (triviaState.answered) return;
+      triviaState.answered = true;
+
+      const isCorrect = selectedIdx === question.correct;
+      if (isCorrect) triviaState.score++;
+
+      // Style all buttons: highlight correct, mark wrong selection
+      const buttons = document.querySelectorAll('.trivia-answer-btn');
+      buttons.forEach((b) => {
+        const idx = parseInt(b.dataset.index);
+        b.classList.add('disabled');
+        if (idx === question.correct) {
+          b.classList.add('correct');
+        } else if (idx === selectedIdx && !isCorrect) {
+          b.classList.add('wrong');
+        }
+      });
+
+      // Show feedback
+      const prefix = isCorrect ? '✓ Correct! ' : '✗ Not quite. ';
+      document.getElementById('triviaFeedback').textContent = prefix + question.feedback;
+
+      // Update score display
+      document.getElementById('triviaScore').textContent = 'Score: ' + triviaState.score;
+
+      // Show next button (or finish button if last question)
+      const nextBtn = document.getElementById('triviaNextBtn');
+      nextBtn.textContent = triviaState.currentQ < 9 ? 'Next ✦' : 'See Results ✦';
+      nextBtn.classList.add('visible');
+    }
+
+    function nextTriviaQuestion() {
+      if (triviaState.currentQ < 9) {
+        triviaState.currentQ++;
+        renderTriviaQuestion();
+      } else {
+        showTriviaResults();
+      }
+    }
+
+    function showTriviaResults() {
+      // Hide question view, show results
+      document.getElementById('triviaQuestionView').style.display = 'none';
+      document.getElementById('triviaResultsView').style.display = '';
+
+      // Set score
+      document.getElementById('triviaFinalScore').textContent =
+        triviaState.score + '/10';
+
+      // Find matching result message
+      const result = TRIVIA_RESULTS.find(
+        r => triviaState.score >= r.min && triviaState.score <= r.max
+      );
+      document.getElementById('triviaResultMsg').textContent =
+        result ? result.msg : 'Great job!';
+    }
+
+    function closeTrivia() {
+      triviaState.active = false;
+      document.getElementById('triviaLayer').classList.remove('active');
+      if (state.uiVisible) {
+        document.getElementById('topBar').classList.remove('ui-hidden');
+        document.getElementById('bottomBar').classList.remove('ui-hidden');
+      }
+    }
+
+    // ============================================
     // PHOTO EDITOR
     // Loads an image from the device's gallery and
     // applies the same filters + frames as camera mode.
@@ -2498,6 +3292,13 @@
     document.getElementById('btnEdSave').addEventListener('click', saveEditedPhoto);
     document.getElementById('btnEdPick').addEventListener('click', openPhotoEditor);
     document.getElementById('btnEdClose').addEventListener('click', closePhotoEditor);
+
+    // Trivia mode
+    document.getElementById('btnTrivia').addEventListener('click', startTrivia);
+    document.getElementById('triviaNextBtn').addEventListener('click', nextTriviaQuestion);
+    document.getElementById('triviaPlayAgain').addEventListener('click', startTrivia);
+    document.getElementById('triviaExit').addEventListener('click', closeTrivia);
+    document.getElementById('triviaCloseBtn').addEventListener('click', closeTrivia);
 
     // Quote mode toggle
     document.getElementById('btnQuotes').addEventListener('click', toggleQuoteMode);
