@@ -781,7 +781,8 @@
     <div class="fractal-info" id="fractalInfo">✦ Julia Set · Pink Pony Club ✦</div>
     <div class="controls">
       <button class="btn" id="btnFractal"><span class="btn-icon">◇</span> Fractal</button>
-      <button class="btn" id="btnPalette"><span class="btn-icon">♦</span> Theme</button>
+      <button class="btn" id="btnColors"><span class="btn-icon">♦</span> Colors</button>
+      <button class="btn" id="btnPalette"><span class="btn-icon">◈</span> UI</button>
       <button class="btn" id="btnMic"><span class="btn-icon">⏺</span> Mic</button>
       <button class="btn" id="btnQuotes"><span class="btn-icon">✧</span> Quotes</button>
       <button class="btn" id="btnEditQuotes"><span class="btn-icon">✎</span> Edit</button>
@@ -807,7 +808,8 @@
       trebleLevel: 0,
       sensitivity: 1.0,
       fractalType: 0,
-      paletteIndex: 0,
+      paletteIndex: 0,   // Controls fractal + sparkle colors
+      themeIndex: 0,      // Controls UI chrome colors (independent)
       time: 0,
       animFrame: null,
       uiVisible: true,
@@ -1155,21 +1157,40 @@
     }
 
     // ============================================
-    // THEME SWITCHING
-    // Swaps body class → all CSS vars update →
-    // fractal palette + sparkle colors + UI all
-    // change together in one smooth transition.
+    // THEME SWITCHING — now split into two controls
+    //
+    // UI Theme: changes buttons, text, badges, meter
+    //   bar — everything in the CSS custom properties.
+    // Fractal Colors: changes the palette used to
+    //   color fractal pixels + sparkle particles.
+    // They cycle independently so you can mix & match.
     // ============================================
-    function cycleTheme() {
+    function cycleUITheme() {
+      state.themeIndex = (state.themeIndex + 1) % THEME_NAMES.length;
+      // Swap the CSS class on body — all CSS vars update instantly
+      document.body.className = THEME_CLASSES[state.themeIndex];
+      updateInfoText();
+    }
+
+    function cycleFractalColors() {
       state.paletteIndex = (state.paletteIndex + 1) % THEME_NAMES.length;
-      document.body.className = THEME_CLASSES[state.paletteIndex];
       updateInfoText();
     }
 
     function updateInfoText() {
       const mode = state.quoteMode ? 'Quote Mode' : FRACTAL_TYPES[state.fractalType];
-      document.getElementById('fractalInfo').textContent =
-        '✦ ' + mode + ' · ' + THEME_NAMES[state.paletteIndex] + ' ✦';
+      // Show both the fractal color name and UI theme name
+      // so user knows what's selected for each
+      const colorName = THEME_NAMES[state.paletteIndex];
+      const uiName = THEME_NAMES[state.themeIndex];
+      if (colorName === uiName) {
+        // Same theme for both — show it once to keep it clean
+        document.getElementById('fractalInfo').textContent =
+          '✦ ' + mode + ' · ' + colorName + ' ✦';
+      } else {
+        document.getElementById('fractalInfo').textContent =
+          '✦ ' + mode + ' · ' + colorName + ' · ' + uiName + ' UI ✦';
+      }
     }
 
     // ============================================
@@ -1376,7 +1397,8 @@
       updateInfoText();
     });
 
-    document.getElementById('btnPalette').addEventListener('click', cycleTheme);
+    document.getElementById('btnPalette').addEventListener('click', cycleUITheme);
+    document.getElementById('btnColors').addEventListener('click', cycleFractalColors);
     document.getElementById('btnFullscreen').addEventListener('click', toggleFullscreen);
 
     // Quote mode toggle
